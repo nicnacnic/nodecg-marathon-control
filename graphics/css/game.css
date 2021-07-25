@@ -1,0 +1,119 @@
+body {
+    width: 1920px;
+    height: 1080px;
+    color: #f9f9f9;
+    position: absolute;
+    margin: 0;
+}
+#layoutText {
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    z-index: 40;
+}
+
+/* Advanced editing of div CSS between these two comments. */
+.runnerContainer {
+    display: inline-block;
+    position: absolute;
+	vertical-align: middle;
+}
+.runnerName {
+    display: inline-block;
+    vertical-align: middle;
+    text-align: left;
+}
+.medalsDiv {
+    display: inline-block;
+    vertical-align: middle;
+}
+.medalsImg {
+    width: 0.8em;
+    height: 0.8em;
+    padding-left: 20px;
+    vertical-align: middle;
+}
+.medalsText {
+    display: inline-block;
+    vertical-align: middle;
+    padding-left: 3px;
+    text-align: right;
+}
+.runnerPronouns {
+    position: absolute;
+    vertical-align: middle;
+}
+#gameName {
+    position: absolute;
+	vertical-align: middle;
+}
+#category {
+    position: absolute;
+    vertical-align: middle;
+}
+#estimate {
+    position: absolute;
+    vertical-align: middle;
+}
+#system {
+    position: absolute;
+    vertical-align: middle;
+}
+#release {
+    position: absolute;
+    vertical-align: middle;
+}
+#timer {
+    position: absolute;
+    vertical-align: middle;
+}
+#sponsor {
+    position: absolute;
+    vertical-align: middle;
+}
+.camCoverDiv {
+    position: absolute;
+    z-index: 20;
+}
+/* Advanced editing of div CSS between these two comments. */
+
+.playerDiv {
+    overflow: hidden;
+    position: absolute;
+    width: 1920px;
+    height: 1080px;
+    top: 0;
+    left: 0;
+    z-index: 10;
+}
+#layoutImg {
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 30;
+}
+#testDiv {
+    position: absolute;
+    visibility: hidden;
+    height: auto;
+    width: auto;
+    white-space: nowrap;
+}
+.camCoverImg {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+}
+#background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    background-color: #000000;
+    z-index: 0;
+}

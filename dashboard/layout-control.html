@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/layout-control.css" />
+    <script src="./js/modules.js"></script>
+    <script src="./js/layout-control.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
+    </script>
+</head>
+
+<body>
+    <div id="main">
+        <div id="sceneDiv">
+            <paper-dropdown-menu class="scenes" id="sceneDropdown" label="Scene" vertical-offset="60">
+                <paper-listbox slot="dropdown-content" class="scene-dropdown-content" id="sceneList"
+                    onClick="changeScene(this)">
+                </paper-listbox>
+            </paper-dropdown-menu>
+            <paper-dropdown-menu class="scenes" id="layoutDropdown" label="Layout" vertical-offset="60">
+                <paper-listbox slot="dropdown-content" class="scene-dropdown-content" id="layoutList"
+                    onClick="changeLayout(this)">
+                </paper-listbox>
+            </paper-dropdown-menu>
+        </div>
+        <div id="runnerInfo">
+            <div class="playerDiv" id="player1Div">
+                    <paper-input class="input" id="player1" label="Player 1"></paper-input>
+                <paper-dropdown-menu class="quality" label="Quality" vertical-offset="60">
+                    <paper-listbox slot="dropdown-content" class="dropdown-content" id="player1QualityList">
+                        <paper-item>Auto</paper-item>
+                        <paper-item>Source</paper-item>
+                        <paper-item>720p60</paper-item>
+                        <paper-item>720p</paper-item>
+                        <paper-item>480p</paper-item>
+                        <paper-item>360p</paper-item>
+                        <paper-item>160p</paper-item>
+                    </paper-listbox>
+                </paper-dropdown-menu>
+                <paper-button raised class="button" id="player1Refresh" onclick="refreshPlayer(1);">
+                    <span id="refresh" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">refresh</span>
+                </paper-button>
+                <paper-button raised class="button" id="player1Mute" onclick="mutePlayer(1);">
+                    <span id="player1MuteButton" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">volume_off</span>
+                </paper-button>
+                <paper-button raised class="button" id="player1Cam" onclick="camPlayer(1);">
+                    <span id="player1CamButton" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">videocam_off</span>
+                </paper-button>
+            </div>
+            <div class="playerDiv" id="player2Div">
+                    <paper-input class="input" id="player2" label="Player 2"></paper-input>
+                <paper-dropdown-menu class="quality" label="Quality" vertical-offset="60">
+                    <paper-listbox slot="dropdown-content" class="dropdown-content" id="player2QualityList">
+                        <paper-item>Auto</paper-item>
+                        <paper-item>Source</paper-item>
+                        <paper-item>720p60</paper-item>
+                        <paper-item>720p</paper-item>
+                        <paper-item>480p</paper-item>
+                        <paper-item>360p</paper-item>
+                        <paper-item>160p</paper-item>
+                    </paper-listbox>
+                </paper-dropdown-menu>
+                <paper-button raised class="button" id="player2Refresh" onclick="refreshPlayer(2);">
+                    <span id="refresh" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">refresh</span>
+                </paper-button>
+                <paper-button raised class="button" id="player2Mute" onclick="mutePlayer(2);">
+                    <span id="player2MuteButton" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">volume_off</span>
+                </paper-button>
+                <paper-button raised class="button" id="player2Cam" onclick="camPlayer(2);">
+                    <span id="player2CamButton" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">videocam_off</span>
+                </paper-button>
+            </div>
+            <div class="playerDiv" id="player3Div">
+                    <paper-input class="input" id="player3" label="Player 3"></paper-input>
+                <paper-dropdown-menu class="quality" label="Quality" vertical-offset="60">
+                    <paper-listbox slot="dropdown-content" class="dropdown-content" id="player3QualityList">
+                        <paper-item>Auto</paper-item>
+                        <paper-item>Source</paper-item>
+                        <paper-item>720p60</paper-item>
+                        <paper-item>720p</paper-item>
+                        <paper-item>480p</paper-item>
+                        <paper-item>360p</paper-item>
+                        <paper-item>160p</paper-item>
+                    </paper-listbox>
+                </paper-dropdown-menu>
+                <paper-button raised class="button" id="player3Refresh" onclick="refreshPlayer(3);">
+                    <span id="refresh" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">refresh</span>
+                </paper-button>
+                <paper-button raised class="button" id="player3Mute" onclick="mutePlayer(3);">
+                    <span id="player3MuteButton" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">volume_off</span>
+                </paper-button>
+                <paper-button raised class="button" id="player3Cam" onclick="camPlayer(3);">
+                    <span id="player3CamButton" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">videocam_off</span>
+                </paper-button>
+            </div>
+            <div class="playerDiv" id="player4Div">
+                    <paper-input class="input" id="player4" label="Player 4"></paper-input>
+                <paper-dropdown-menu class="quality" label="Quality" vertical-offset="-150">
+                    <paper-listbox slot="dropdown-content" class="dropdown-content" id="player4QualityList">
+                        <paper-item>Auto</paper-item>
+                        <paper-item>Source</paper-item>
+                        <paper-item>720p60</paper-item>
+                        <paper-item>720p</paper-item>
+                        <paper-item>480p</paper-item>
+                        <paper-item>360p</paper-item>
+                        <paper-item>160p</paper-item>
+                    </paper-listbox>
+                </paper-dropdown-menu>
+                <paper-button raised class="button" id="player4Refresh" onclick="refreshPlayer(4);">
+                    <span id="refresh" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">refresh</span>
+                </paper-button>
+                <paper-button raised class="button" id="player4Mute" onclick="mutePlayer(4);">
+                    <span id="player4MuteButton" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">volume_off</span>
+                </paper-button>
+                <paper-button raised class="button" id="player4Cam" onclick="camPlayer(4);">
+                    <span id="player4CamButton" class="material-icons"
+                        style="font-size: 24px; vertical-align:middle;">videocam_off</span>
+                </paper-button>
+            </div>
+        </div>
+        <div id="buttons">
+            <paper-button raised class="button" id="update" style="width: 90px; font-size: 14px" onclick="updateSource();">
+                Update
+            </paper-button>
+        </div>
+        <custom-style>
+            <style>
+                paper-input.input {
+                    display: inline-block;
+                    width: 34%;
+                    margin-top: 10px;
+                    --primary-text-color: white;
+                    --paper-input-container-color: #FFFFFFB3;
+                    --paper-input-container-focus-color: #2196F3;
+                    --paper-input-container-underline-focus-border-color: #2196F3;
+                }
+
+                paper-button.button {
+                    width: 40px;
+                    height: 40px;
+                    margin-top: 15px;
+                    font-family: Roboto;
+                    font-weight: 500;
+                    font-size: 8px;
+                    letter-spacing: .0892857143em;
+                    background-color: #272727;
+                    --paper-button-ink-color: #6A6A6A;
+                }
+
+                paper-button.button:hover {
+                    background-color: #383838;
+                }
+
+                paper-button.button[disabled] {
+                    background-color: #485264;
+                }
+
+                paper-dropdown-menu.scenes {
+                    width: 100%;
+                    --paper-input-container-color: #FFFFFFB3;
+                    --paper-input-container-focus-color: #2196F3;
+                    --paper-input-container-input-color: #FFFFFF;
+                    --paper-input-container-underline-focus-border-color: #2196F3;
+                }
+
+                paper-dropdown-menu.quality {
+                    display: inline-block;
+                    width: 22%;
+                    margin-left: 10px;
+                    margin-right: 5px;
+                    --paper-input-container-color: #FFFFFFB3;
+                    --paper-input-container-focus-color: #2196F3;
+                    --paper-input-container-input-color: #FFFFFF;
+                    --paper-input-container-underline-focus-border-color: #2196F3;
+                }
+
+                paper-listbox.scene-dropdown-content {
+                    width: 150px;
+                    height: 200px;
+                }
+
+                paper-listbox.dropdown-content {
+                    width: 100px;
+                    height: 150px;
+                }
+            </style>
+        </custom-style>
+    </div>
+</body>
+
+</html>

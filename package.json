@@ -1,0 +1,170 @@
+{
+  "name": "nodecg-marathon-control",
+  "version": "1.0.0",
+  "description": "A NodeCG bundle to control all aspects of a marathon's stream.",
+  "homepage": "https://github.com/nicnacnic/nodecg-marathon-control",
+  "license": "MIT",
+  "author": "nicnacnic",
+  "nodecg": {
+    "compatibleRange": "^1.8.1",
+    "assetCategories": [
+      {
+        "name": "intermission-layout",
+        "title": "Intermission Layout",
+        "allowedTypes": [
+          "jpg",
+          "jpeg",
+          "gif",
+          "png"
+        ]
+      },
+      {
+        "name": "game-layouts",
+        "title": "Game Layouts",
+        "allowedTypes": [
+          "jpg",
+          "jpeg",
+          "gif",
+          "png"
+        ]
+      },
+      {
+        "name": "cam-cover",
+        "title": "Cam Covers",
+        "allowedTypes": [
+          "jpg",
+          "jpeg",
+          "gif",
+          "png"
+        ]
+      },
+      {
+        "name": "marathon-logo",
+        "title": "Marathon Logo",
+        "allowedTypes": [
+          "jpg",
+          "jpeg",
+          "gif",
+          "png"
+        ]
+      },
+      {
+        "name": "charity-logo",
+        "title": "Charity Logo",
+        "allowedTypes": [
+          "jpg",
+          "jpeg",
+          "gif",
+          "png"
+        ]
+      },
+      {
+        "name": "sponsor-logos",
+        "title": "Sponsor Logos",
+        "allowedTypes": [
+          "jpg",
+          "jpeg",
+          "gif",
+          "png"
+        ]
+      },
+      {
+        "name": "fonts",
+        "title": "Fonts",
+        "allowedTypes": [
+          "ttf"
+        ]
+      }
+    ],
+    "dashboardPanels": [
+      {
+        "name": "preview-program",
+        "title": "Preview/Program",
+        "width": 9,
+        "file": "preview-program.html"
+      },
+      {
+        "name": "layout-control",
+        "title": "Layout Control",
+        "width": 3,
+        "file": "layout-control.html"
+      },
+      {
+        "name": "audio",
+        "title": "Audio",
+        "width": 3,
+        "file": "audio.html"
+      },
+      {
+        "name": "stats",
+        "title": "Stats",
+        "width": 3,
+        "file": "stats.html"
+      },
+      {
+        "name": "layout-setup",
+        "title": "Game Layout",
+        "width": 3,
+        "file": "layout-setup.html",
+        "workspace": "Settings"
+      },
+      {
+        "name": "twitch-setup",
+        "title": "Twitch Players",
+        "width": 3,
+        "file": "twitch-setup.html",
+        "workspace": "Settings"
+      },
+      {
+        "name": "timer-colors",
+        "title": "Timer Colors",
+        "width": 3,
+        "file": "timer-colors.html",
+        "workspace": "Settings"
+      },
+      {
+        "name": "intermission-setup",
+        "title": "Intermission",
+        "width": 3,
+        "file": "intermission-setup.html",
+        "workspace": "Settings"
+      },
+      {
+        "name": "about",
+        "title": "About",
+        "width": 3,
+        "file": "about.html",
+        "workspace": "Settings"
+      }
+    ],
+    "graphics": [
+      {
+        "file": "intermission.html",
+        "width": 1920,
+        "height": 1080
+      },
+      {
+        "file": "game.html",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  },
+  "dependencies": {
+    "@polymer/paper-button": "^3.0.1",
+    "@polymer/paper-checkbox": "^3.0.1",
+    "@polymer/paper-dropdown-menu": "^3.2.0",
+    "@polymer/paper-input": "^3.2.1",
+    "@polymer/paper-item": "^3.0.1",
+    "@polymer/paper-listbox": "^3.0.1",
+    "@polymer/paper-slider": "^3.0.1",
+    "@polymer/paper-styles": "^3.0.1",
+    "@polymer/paper-toggle-button": "^3.0.1",
+    "@polymer/polymer": "^3.4.1",
+    "obs-websocket-js": "^4.0.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "rollup": "^2.45.2"
+  }
+}

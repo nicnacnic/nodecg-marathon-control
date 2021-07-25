@@ -1,0 +1,79 @@
+body {
+    width: 1920px;
+    height: 1080px;
+    color: #f9f9f9;
+    position: absolute;
+    margin: 0;
+}
+#layoutText {
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    z-index: 40;
+}
+
+/* Advanced editing of div CSS between these two comments. */
+#donationTotal {
+    position: absolute;
+	vertical-align: middle;
+}
+#host {
+    position: absolute;
+	vertical-align: middle;
+}
+.gameName {
+    position: absolute;
+	vertical-align: middle;
+}
+.category {
+    position: absolute;
+    vertical-align: middle;
+}
+.estimate {
+    position: absolute;
+    vertical-align: middle;
+}
+.system {
+    position: absolute;
+    vertical-align: middle;
+}
+.release {
+    position: absolute;
+    vertical-align: middle;
+}
+.players {
+    position: absolute;
+    vertical-align: middle;
+}
+#sponsor {
+    position: absolute;
+    vertical-align: middle;
+}
+/* Advanced editing of div CSS between these two comments. */
+
+#layoutImg {
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 30;
+}
+#testDiv {
+    position: absolute;
+    visibility: hidden;
+    height: auto;
+    width: auto;
+    white-space: nowrap;
+}
+#background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    background-color: #000000;
+    z-index: 0;
+}

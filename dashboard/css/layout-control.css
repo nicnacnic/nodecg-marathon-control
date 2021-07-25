@@ -1,0 +1,33 @@
+#main {
+	width: 100%;
+	height: 100%;
+}
+#sceneDiv {
+    display: inline-block;
+    width: 100%;
+    margin-top: -10px;
+}
+#sceneDropdown {
+    margin: 0 auto;
+    width: 48%;
+    float: left;
+}
+#layoutDropdown {
+    margin: 0 auto;
+    width: 48%;
+    float: right;
+}
+#runnerInfo {
+    width: 100%;
+    margin-top: -5px;
+}
+.playerDiv {
+    display: inline-block;
+    vertical-align: middle;
+    width: 100%;
+}
+#buttons {
+	text-align: center;
+	justify-content: center;
+	width: 100%;
+}
