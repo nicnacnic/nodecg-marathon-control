@@ -8,14 +8,14 @@ module.exports = function (nodecg) {
     // Initialize replicants.
     const activeRunners = nodecg.Replicant('activeRunners', { defaultValue: [{ name: '', quality: 'Auto', mute: true, cam: false }, { name: '', quality: 'Auto', mute: true, cam: false }, { name: '', quality: 'Auto', mute: true, cam: false }, { name: '', quality: 'Auto', mute: true, cam: false }] });
     const quality = nodecg.Replicant('quality', { defaultValue: 'Auto' })
-    const streamStatus = nodecg.Replicant('streamStatus');
+    const streamStatus = nodecg.Replicant('streamStatus', { defaultValue: { streaming: false, recording: false }});
     const sceneList = nodecg.Replicant('sceneList', { persistent: false });
     const currentScene = nodecg.Replicant('currentScene', { defaultValue: { preview: "", program: "" } });
     const currentLayout = nodecg.Replicant('currentLayout');
     const currentCrop = nodecg.Replicant('currentCrop');
     const cropItems = nodecg.Replicant('cropItems');
     const audioSources = nodecg.Replicant('audioSources');
-    const previewProgram = nodecg.Replicant('previewProgram', { persistent: false });
+    const previewProgram = nodecg.Replicant('previewProgram', { defaultValue: { preview: "", program: "" } });
     const emergencyTransition = nodecg.Replicant('emergencyTransition', false);
     const autoRecord = nodecg.Replicant('autoRecord', { defaultValue: false });
     const showBorders = nodecg.Replicant('showBorders', { defaultValue: false })
@@ -50,10 +50,6 @@ module.exports = function (nodecg) {
     obs.connect({ address: "localhost:4444", password: "Kunodaddy" }).then(async () => {
         nodecg.log.info('Connected to OBS instance!')
 
-        obs.on('error', error => {
-            websocketError(error)
-        });
-
         // Get OBS data.
         getAudioSources()
         obs.send('GetStudioModeStatus').then(result => {
@@ -82,7 +78,12 @@ module.exports = function (nodecg) {
         }).catch((error) => websocketError(error));
 
         // Listening for OBS events.
+        obs.on('error', error =>  websocketError(error));
         obs.on('StreamStatus', (data) => stats.value = data)
+        obs.on('StreamStarted', (data) => streamStatus.value.streaming = true)
+        obs.on('StreamStopped', () => streamStatus.value.streaming = false)
+        obs.on('RecordingStarted', () => { console.log(true);streamStatus.value.recording = true } )
+        obs.on('RecordingStopped', (data) => streamStatus.value.recording = false)
         obs.on('PreviewSceneChanged', (data) => {
             const blockedTypes = ['wasapi_input_capture', 'wasapi_output_capture', 'pulse_input_capture', 'pulse_output_capture', 'group']
             let sourceArray = [];

@@ -130,6 +130,13 @@
         "workspace": "Settings"
       },
       {
+        "name": "stream-setup",
+        "title": "Stream",
+        "width": 3,
+        "file": "stream-setup.html",
+        "workspace": "Settings"
+      },
+      {
         "name": "about",
         "title": "About",
         "width": 3,

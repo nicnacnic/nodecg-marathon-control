@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/stream-setup.css" />
+    <script src="./js/modules.js"></script>
+    <script src="./js/stream-setup.js"></script>
+    </script>
+</head>
+
+<body>
+    <div id="main">
+        <paper-input class="input" id="preview" type="string" label="Preview URL" onChange="changePreview(this.value)">
+        </paper-input>
+        <paper-input class="input" id="program" type="string" label="Program URL" onChange="changeProgram(this.value)">
+        </paper-input>
+    </div>
+    <custom-style>
+        <style>
+            paper-input.input {
+                display: inline-block;
+                width: 100%;
+                
+                --primary-text-color: white;
+                --paper-input-container-color: #FFFFFFB3;
+                --paper-input-container-focus-color: #2196F3;
+                --paper-input-container-underline-focus-border-color: #2196F3;
+            }
+        </style>
+    </custom-style>
+</body>
+
+</html>
