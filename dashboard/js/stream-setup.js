@@ -1,10 +1,10 @@
-const previewProgram = nodecg.Replicant('previewProgram');
+const settings = nodecg.Replicant('settings');
 
 window.addEventListener('load', function () {
-    NodeCG.waitForReplicants(previewProgram).then(() => {
+    NodeCG.waitForReplicants(settings).then(() => {
 
         // Update preview/program URL.
-        previewProgram.on('change', (newVal) => {
+        settings.on('change', (newVal) => {
             document.getElementById('preview').value = newVal.previewURL;
             document.getElementById('program').value = newVal.programURL;
         });
@@ -12,9 +12,9 @@ window.addEventListener('load', function () {
 });
 
 function changePreview(value) {
-    previewProgram.value.preview = value;
+    settings.value.previewURL = value;
 }
 
 function changeProgram(value) {
-    previewProgram.value.program = value;
+    settings.value.programURL = value;
 }

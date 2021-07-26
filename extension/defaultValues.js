@@ -819,4 +819,18 @@ function setDefaultIntermissionProperties(callback) {
     callback(properties);
 }
 
-module.exports = { setDefaultLayoutProperties, setDefaultIntermissionProperties };
+const statsValue = {
+    cpuUsage: 0.00,
+    fps: 0.00,
+    kbitsPerSec: 0000,
+    averageFrameTime: 0.0,
+    renderMissedFrames: 0,
+    renderTotalFrames: 0,
+    outputSkippedFrames: 0,
+    outputTotalFrames: 0,
+    numDroppedFrames: 0,
+    numTotalFrames: 0,
+    totalStreamTime: 0,
+    freeDiskSpace: 0
+}
+module.exports = { setDefaultLayoutProperties, setDefaultIntermissionProperties, statsValue };

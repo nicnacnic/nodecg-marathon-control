@@ -15,18 +15,37 @@
         </paper-input>
         <paper-input class="input" id="program" type="string" label="Program URL" onChange="changeProgram(this.value)">
         </paper-input>
+        <div id="sceneProperties">
+            <paper-dropdown-menu class="dropdown" id="intermissionDropdown" label="Intermission Scene" vertical-offset="60">
+                <paper-listbox slot="dropdown-content" class="dropdown-content" id="intermissionList"
+                    onClick="changeIntermission(this)">
+                </paper-listbox>
+            </paper-dropdown-menu>
+            <paper-dropdown-menu class="dropdown" id="gameDropdown" label="Game Scene" vertical-offset="60">
+                <paper-listbox slot="dropdown-content" class="dropdown-content" id="gameList"
+                    onClick="changeGame(this)">
+                </paper-listbox>
+            </paper-dropdown-menu>
+        </div>
     </div>
     <custom-style>
         <style>
             paper-input.input {
                 display: inline-block;
                 width: 100%;
-                
                 --primary-text-color: white;
                 --paper-input-container-color: #FFFFFFB3;
                 --paper-input-container-focus-color: #2196F3;
                 --paper-input-container-underline-focus-border-color: #2196F3;
             }
+
+            paper-dropdown-menu.dropdown {
+                    width: 100%;
+                    --paper-input-container-color: #FFFFFFB3;
+                    --paper-input-container-focus-color: #2196F3;
+                    --paper-input-container-input-color: #FFFFFF;
+                    --paper-input-container-underline-focus-border-color: #2196F3;
+                }
         </style>
     </custom-style>
 </body>
