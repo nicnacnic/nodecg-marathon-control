@@ -1,5 +1,6 @@
+const { settings } = require('cluster');
 const OBSWebSocket = require('obs-websocket-js');
-const { setDefaultLayoutProperties, setDefaultIntermissionProperties, statsValue } = require('./defaultValues');
+const { setDefaultLayoutProperties, setDefaultIntermissionProperties, statsValue, settingsValue } = require('./defaultValues');
 
 module.exports = function (nodecg) {
     const obs = new OBSWebSocket();
@@ -16,25 +17,12 @@ module.exports = function (nodecg) {
     const showBorders = nodecg.Replicant('showBorders', { defaultValue: false })
     const fontFaces = nodecg.Replicant('fontFaces', { defaultValue: [] })
     const intermissionProperties = nodecg.Replicant('intermissionProperties', { defaultValue: [] });
-
     const timerColors = nodecg.Replicant('timerColors', { defaultValue: { running: 'FFFFFF', stopped: 'FFFFFF', paused: 'FFFFFF', finished: 'FFFFFF' } })
-
     const layoutList = nodecg.Replicant('assets:game-layouts');
     const layoutProperties = nodecg.Replicant('layoutProperties', { defaultValue: [] })
     const stats = nodecg.Replicant('stats', { defaultValue: statsValue });
-
-    const settings = nodecg.Replicant('settings', {
-        defaultValue: {
-            previewURL: '',
-            programURL: '',
-            streaming: false,
-            recording: false,
-            intermissionScene: '',
-            gameScene: '',
-            autoRecord: false,
-            emergencyTransition: false
-        }
-    })
+    const settings = nodecg.Replicant('settings', { defaultValue: settingsValue })
+    const firstLaunch = nodecg.Replicant('firstLaunch', { defaultValue: true })
 
     obs.connect({ address: nodecg.bundleConfig.websocketAddress, password: nodecg.bundleConfig.websocketPassword }).then(async () => {
         nodecg.log.info('Connected to OBS instance!')

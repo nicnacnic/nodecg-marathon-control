@@ -833,4 +833,15 @@ const statsValue = {
     totalStreamTime: 0,
     freeDiskSpace: 0
 }
-module.exports = { setDefaultLayoutProperties, setDefaultIntermissionProperties, statsValue };
+
+const settingsValue = {
+    previewURL: '',
+    programURL: '',
+    streaming: false,
+    recording: false,
+    intermissionScene: '',
+    gameScene: '',
+    autoRecord: false,
+    emergencyTransition: false
+}
+module.exports = { setDefaultLayoutProperties, setDefaultIntermissionProperties, statsValue, settingsValue };

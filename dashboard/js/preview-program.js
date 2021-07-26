@@ -1,7 +1,14 @@
 const settings = nodecg.Replicant('settings');
+const firstLaunch = nodecg.Replicant('firstLaunch')
 
 window.addEventListener('load', function () {
-    NodeCG.waitForReplicants(settings).then(() => {
+    NodeCG.waitForReplicants(settings, firstLaunch).then(() => {
+
+        // Open welcome dialog on first launch.
+        if (firstLaunch.value) {
+            document.getElementById('test').click()
+            firstLaunch.value = false;
+        }
 
         // Update preview/program player URL.
         settings.on('change', (newVal) => {

@@ -142,6 +142,19 @@
         "width": 3,
         "file": "about.html",
         "workspace": "Settings"
+      },
+      {
+        "name": "welcome",
+        "title": "Welcome!",
+        "width": 4,
+        "dialog": true,
+        "dialogButtons": [
+          {
+            "name": "Ok",
+            "type": "confirm"
+          }
+        ],
+        "file": "welcome.html"
       }
     ],
     "graphics": [
