@@ -1,23 +1,18 @@
 const OBSWebSocket = require('obs-websocket-js');
-const { websocketError } = require('./utils')
-const { setDefaultLayoutProperties, setDefaultIntermissionProperties } = require('./defaultValues')
+const { setDefaultLayoutProperties, setDefaultIntermissionProperties } = require('./defaultValues');
 
 module.exports = function (nodecg) {
     const obs = new OBSWebSocket();
 
     // Initialize replicants.
     const activeRunners = nodecg.Replicant('activeRunners', { defaultValue: [{ name: '', quality: 'Auto', mute: true, cam: false }, { name: '', quality: 'Auto', mute: true, cam: false }, { name: '', quality: 'Auto', mute: true, cam: false }, { name: '', quality: 'Auto', mute: true, cam: false }] });
-    const quality = nodecg.Replicant('quality', { defaultValue: 'Auto' })
-    const streamStatus = nodecg.Replicant('streamStatus', { defaultValue: { streaming: false, recording: false }});
+    //const quality = nodecg.Replicant('quality', { defaultValue: 'Auto' })
+    const streamStatus = nodecg.Replicant('streamStatus', { defaultValue: { streaming: false, recording: false } });
     const sceneList = nodecg.Replicant('sceneList', { persistent: false });
     const currentScene = nodecg.Replicant('currentScene', { defaultValue: { preview: "", program: "" } });
     const currentLayout = nodecg.Replicant('currentLayout');
     const currentCrop = nodecg.Replicant('currentCrop');
-    const cropItems = nodecg.Replicant('cropItems');
     const audioSources = nodecg.Replicant('audioSources');
-    const previewProgram = nodecg.Replicant('previewProgram', { defaultValue: { preview: "", program: "" } });
-    const emergencyTransition = nodecg.Replicant('emergencyTransition', false);
-    const autoRecord = nodecg.Replicant('autoRecord', { defaultValue: false });
     const showBorders = nodecg.Replicant('showBorders', { defaultValue: false })
     const fontFaces = nodecg.Replicant('fontFaces', { defaultValue: [] })
     const intermissionProperties = nodecg.Replicant('intermissionProperties', { defaultValue: [] });
@@ -26,35 +21,24 @@ module.exports = function (nodecg) {
 
     const layoutList = nodecg.Replicant('assets:game-layouts');
     const layoutProperties = nodecg.Replicant('layoutProperties', { defaultValue: [] })
-    const stats = nodecg.Replicant('stats', {
-        defaultValue: {
-            cpuUsage: 0.00,
-            fps: 0.00,
-            kbitsPerSec: 0000,
-            averageFrameTime: 0.0,
-            renderMissedFrames: 0,
-            renderTotalFrames: 0,
-            outputSkippedFrames: 0,
-            outputTotalFrames: 0,
-            numDroppedFrames: 0,
-            numTotalFrames: 0,
-            totalStreamTime: 0,
-            freeDiskSpace: 0
-        }
-    });
+    const stats = nodecg.Replicant('stats');
 
-    obs.on('error', error => {
-        websocketError(error)
-    });
+    const settings = nodecg.Replicant('settings', { defaultValue: {
+        previewURL: '',
+        programURL: '',
+        intermissionScene: '',
+        gameScene: '',
+        autoRecord: false,
+        emergencyTransition: false
+    }})
 
-    obs.connect({ address: "localhost:4444", password: "Kunodaddy" }).then(async () => {
+    obs.connect({ address: nodecg.bundleConfig.websocketAddress, password: nodecg.bundleConfig.websocketPassword }).then(async () => {
         nodecg.log.info('Connected to OBS instance!')
 
         // Get OBS data.
-        getAudioSources()
         obs.send('GetStudioModeStatus').then(result => {
             if (!result['studio-mode'])
-                nodecg.log.error('Studio mode not enabled! Enable studio mode in OBS then restart NodeCG.')
+                obs.send('EnableStudioMode').catch((error) => websocketError(error));
         }).catch((error) => websocketError(error));
 
         obs.send('GetSceneList').then(result => {
@@ -62,41 +46,17 @@ module.exports = function (nodecg) {
             currentScene.value.program = result.currentScene;
         }).catch((error) => websocketError(error));
 
-        obs.send('GetPreviewScene').then(result => {
-            currentScene.value.preview = result.name;
-            const blockedTypes = ['wasapi_input_capture', 'wasapi_output_capture', 'pulse_input_capture', 'pulse_output_capture', 'group'];
-            let sourceArray = [];
-            for (let i = 0; i < result.sources.length; i++) {
-                if (!blockedTypes.includes(result.sources[i].type))
-                    sourceArray.push(result.sources[i].name)
-            }
-            if (sourceArray.length > 0)
-                cropItems.value = sourceArray;
-            else
-                cropItems.value = '';
-
-        }).catch((error) => websocketError(error));
+        obs.send('GetPreviewScene').then(result => currentScene.value.preview = result.name).catch((error) => websocketError(error));
+        obs.send('GetStats').then(result => stats.value = result.stats).catch((error) => websocketError(error));
+        getAudioSources()
 
         // Listening for OBS events.
-        obs.on('error', error =>  websocketError(error));
+        obs.on('error', (error) => websocketError(error));
         obs.on('StreamStatus', (data) => stats.value = data)
-        obs.on('StreamStarted', (data) => streamStatus.value.streaming = true)
+        obs.on('StreamStarted', () => streamStatus.value.streaming = true)
         obs.on('StreamStopped', () => streamStatus.value.streaming = false)
-        obs.on('RecordingStarted', () => { console.log(true);streamStatus.value.recording = true } )
-        obs.on('RecordingStopped', (data) => streamStatus.value.recording = false)
-        obs.on('PreviewSceneChanged', (data) => {
-            const blockedTypes = ['wasapi_input_capture', 'wasapi_output_capture', 'pulse_input_capture', 'pulse_output_capture', 'group']
-            let sourceArray = [];
-            currentScene.value.preview = data.sceneName;
-            for (let i = 0; i < data.sources.length; i++) {
-                if (!blockedTypes.includes(data.sources[i].type))
-                    sourceArray.push(data.sources[i].name)
-            }
-            if (sourceArray.length > 0)
-                cropItems.value = sourceArray;
-            else
-                cropItems.value = '';
-        })
+        obs.on('RecordingStarted', () => streamStatus.value.recording = true)
+        obs.on('RecordingStopped', () => streamStatus.value.recording = false)
         obs.on('SourceVolumeChanged', (data) => {
             audioSources.value.forEach(element => {
                 if (element.name === data.sourceName) {
@@ -130,9 +90,8 @@ module.exports = function (nodecg) {
     if (intermissionProperties.value.length < 27)
         setDefaultIntermissionProperties((callback) => intermissionProperties.value = callback);
 
-    setTimeout(function () {
-
-        // Update layout element properties.
+    // Update layout element properties.
+    setTimeout(() => {
         layoutList.on('change', (newVal, oldVal) => {
             let missingItems = [];
             let duplicateItems = [];
@@ -146,12 +105,8 @@ module.exports = function (nodecg) {
                     duplicateItems.push(element.layout)
                 }
             })
-            duplicateItems.forEach(element => {
-                layoutProperties.value.splice(layoutProperties.value.findIndex(obj => obj.layout === element), 1)
-            });
-            missingItems.forEach(element => {
-                setDefaultLayoutProperties(element, (callback) => layoutProperties.value.push(callback));
-            })
+            duplicateItems.forEach(element => layoutProperties.value.splice(layoutProperties.value.findIndex(obj => obj.layout === element), 1));
+            missingItems.forEach(element => setDefaultLayoutProperties(element, (callback) => layoutProperties.value.push(callback)))
         })
     }, 1000)
 
@@ -162,10 +117,10 @@ module.exports = function (nodecg) {
         let sortedArray = [];
         let getSourceVolume, getSourceSyncOffset;
         obs.send('GetSourcesList').then(async result => {
-            for (let i = 0; i < result.sources.length; i++) {
-                if (audioSourceTypes.includes(result.sources[i].typeId))
-                    audioSourcesList.push(result.sources[i].name);
-            }
+            result.sources.forEach(source => {
+                if (audioSourceTypes.includes(source.typeId))
+                    audioSourcesList.push(source.name)
+            })
             audioSourcesList.forEach(element => {
                 getSourceVolume = obs.send('GetVolume', { source: element }).then(result => {
                     getSourceSyncOffset = obs.send('GetSyncOffset', { source: element }).then(data => {
@@ -178,4 +133,49 @@ module.exports = function (nodecg) {
             audioSources.value = sortedArray;
         });
     };
+
+    // Auto-Record logic.
+    // obs.on('TransitionEnd', (data) => {
+    //     if (data.toScene === nodecg.bundleConfig.scenes.intermission && streamStatus.value.recording && autoRecord.value && emergencyTransition.value === false) {
+    //         obs.send('StopRecording').catch((error) => websocketError(error));
+    //     }
+    //     else if (data.toScene !== nodecg.bundleConfig.scenes.intermission) {
+    //         if (!streamStatus.value.recording && autoRecord.value)
+    //             obs.send('StartRecording').catch((error) => websocketError(error));
+    //         emergencyTransition.value = false;
+    //     }
+    // });
+
+    // Emergency Transition logic.
+    // emergencyTransition.on('change', (newVal) => {
+    //     if (newVal) {
+    //         obs.send('SetPreviewScene', { "scene-name": nodecg.bundleConfig.scenes.intermission }).then(() => {
+    //             obs.send('TransitionToProgram').catch((error) => websocketError(error));
+    //             nodecg.log.warn('Emergency transition activated on ' + Date() + '.')
+    //         }).catch((error) => websocketError(error));
+    //     }
+    // });
+
+    function websocketError(error) {
+        nodecg.log.error('OBS Error: ' + error.error)
+        if (error.code === 'CONNECTION_ERROR')
+            nodecg.log.error('Not connected to OBS.')
+        /*
+        if (error.code === 'NOT_CONNECTED' || error.code === 'CONNECTION_ERROR' || error.error === 'Not Authenticated') {
+            if (!connectionError) {
+                connectionError = true;
+                nodecg.log.error('Disconnected from OBS. Retrying every 10s, please check your connection.');
+                let obsReconnect = setInterval(function () {
+                    obs.connect({ address: nodecg.bundleConfig.obsWebsocket.address, password: nodecg.bundleConfig.obsWebsocket.password }).then(() => {
+                        nodecg.log.info('Reconnected to OBS instance!');
+                        connectionError = false;
+                        clearInterval(obsReconnect);
+                    }).catch((error));
+                }, 10000);
+            }
+        }
+        else
+            nodecg.log.error(JSON.stringify(error, null, 2)); */
+        //nodecg.log.error(error)
+    }
 };

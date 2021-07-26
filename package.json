@@ -131,7 +131,7 @@
       },
       {
         "name": "stream-setup",
-        "title": "Stream",
+        "title": "OBS Properties",
         "width": 3,
         "file": "stream-setup.html",
         "workspace": "Settings"

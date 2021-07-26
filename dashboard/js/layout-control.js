@@ -10,7 +10,7 @@ window.addEventListener('load', function () {
     NodeCG.waitForReplicants(activeRunners, sceneList, layoutList, currentScene, currentLayout).then(() => {
 
         // Populates dropdown with current scenes.
-        sceneList.on('change', (newVal, oldVal) => {
+        sceneList.on('change', (newVal) => {
             const dropdownContent = document.getElementById("sceneList");
             dropdownContent.innerHTML = '';
             for (let i = 0; i < newVal.length; i++) {
@@ -23,7 +23,7 @@ window.addEventListener('load', function () {
         });
 
         // Populates dropdown with uploaded layouts.
-        layoutList.on('change', (newVal, oldVal) => {
+        layoutList.on('change', (newVal) => {
             const dropdownContent = document.getElementById("layoutList");
             dropdownContent.innerHTML = '';
             for (let i = 0; i < newVal.length; i++) {
@@ -38,7 +38,11 @@ window.addEventListener('load', function () {
         });
 
         // Update selected scene if changed in OBS.
-        currentScene.on('change', (newVal, oldVal) => {
+        currentScene.on('change', (newVal) => {
+            switch (newVal.preview) {
+                case nodecg.bundleConfig.scenes.game: document.getElementById('layoutDropdown').removeAttribute("disabled"); break;
+                default: document.getElementById('layoutDropdown').setAttribute("disabled", true); break;
+            }
             const dropdownContent = document.getElementById('sceneList');
             const items = dropdownContent.items;
             for (let i = 0; i < items.length; i++) {
@@ -77,21 +81,13 @@ window.addEventListener('load', function () {
                     else if (j + 1 === items.length)
                         dropdownContent.selectIndex(0);
                 }
-                if (newVal[i].mute) {
-                    document.getElementById('player' + (i + 1) + 'MuteButton').innerHTML = 'volume_off'
-                    document.getElementById('player' + (i + 1) + 'MuteButton').style.color = 'red'
+                switch (newVal[i].mute) {
+                    case true: document.getElementById('player' + (i + 1) + 'MuteButton').innerHTML = 'volume_off'; document.getElementById('player' + (i + 1) + 'MuteButton').style.color = 'red'; break;
+                    case false: document.getElementById('player' + (i + 1) + 'MuteButton').innerHTML = 'volume_up'; document.getElementById('player' + (i + 1) + 'MuteButton').style.color = 'white'; break;
                 }
-                else {
-                    document.getElementById('player' + (i + 1) + 'MuteButton').innerHTML = 'volume_up'
-                    document.getElementById('player' + (i + 1) + 'MuteButton').style.color = 'white'
-                }
-                if (newVal[i].cam) {
-                    document.getElementById('player' + (i + 1) + 'CamButton').innerHTML = 'videocam'
-                    document.getElementById('player' + (i + 1) + 'CamButton').style.color = 'white'
-                }
-                else {
-                    document.getElementById('player' + (i + 1) + 'CamButton').innerHTML = 'videocam_off'
-                    document.getElementById('player' + (i + 1) + 'CamButton').style.color = 'red'
+                switch (newVal[i].cam) {
+                    case true: document.getElementById('player' + (i + 1) + 'CamButton').innerHTML = 'videocam'; document.getElementById('player' + (i + 1) + 'CamButton').style.color = 'white'; break;
+                    case false: document.getElementById('player' + (i + 1) + 'CamButton').innerHTML = 'videocam_off'; document.getElementById('player' + (i + 1) + 'CamButton').style.color = 'red'; break;
                 }
             }
         });

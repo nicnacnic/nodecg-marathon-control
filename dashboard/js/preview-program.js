@@ -1,16 +1,17 @@
-const previewProgram = nodecg.Replicant('previewProgram');
+const settings = nodecg.Replicant('settings');
 const streamStatus = nodecg.Replicant('streamStatus');
 
 window.addEventListener('load', function () {
     NodeCG.waitForReplicants(previewProgram, streamStatus).then(() => {
-        previewProgram.on('change', (newVal) => {
-            document.getElementById('preview').src = newVal.preview + '&cleanish';
-            document.getElementById('program').src = newVal.program + '&cleanish';
+
+        // Update preview/program player URL.
+        settings.on('change', (newVal) => {
+            document.getElementById('preview').src = newVal.previewURL + '&cleanish';
+            document.getElementById('program').src = newVal.programURL + '&cleanish';
         });
 
+        // Update stream status icons.
         streamStatus.on('change', (newVal) => {
-            console.log(newVal.streaming)
-            console.log(newVal.recording)
             switch (newVal.streaming) {
                 case true: document.getElementById('streaming').style.color = 'limegreen'; break;
                 case false: document.getElementById('streaming').style.color = 'white'; break;
