@@ -50,7 +50,7 @@ module.exports = function (nodecg) {
         obs.on('RecordingStarted', () => settings.value.recording = true)
         obs.on('RecordingStopped', () => settings.value.recording = false)
         obs.on('TransitionBegin', () => nodecg.sendMessage('transitionBegin'))
-        obs.on('TransitionEnd', () => toggleAutoRecord())
+        obs.on('TransitionEnd', (data) => toggleAutoRecord(data))
         obs.on('SourceCreated', () => getAudioSources())
         obs.on('SourceDestroyed', () => getAudioSources())
         obs.on('SourceVolumeChanged', (data) => {
@@ -80,6 +80,8 @@ module.exports = function (nodecg) {
         nodecg.listenFor('setMute', (value) => obs.send('SetMute', { source: value.source, mute: value.mute }))
         nodecg.listenFor('setOffset', (value) => obs.send('SetSyncOffset', { source: value.source, offset: value.offset }))
         nodecg.listenFor('transitionToProgram', () => obs.send('TransitionToProgram'))
+        nodecg.listenFor('toggleStream', () => obs.send('StartStopStreaming'))
+        nodecg.listenFor('toggleRecording', () => obs.send('StartStopRecording'))
 
         if (intermissionProperties.value.length < 27)
             setDefaultIntermissionProperties((callback) => intermissionProperties.value = callback);
@@ -129,7 +131,7 @@ module.exports = function (nodecg) {
         };
 
         // Auto-Record logic.
-        function toggleAutoRecord() {
+        function toggleAutoRecord(data) {
             nodecg.sendMessage('transitionEnd')
             if (settings.value.autoRecord) {
                 if (data.toScene !== settings.value.intermissionScene && !streamStatus.value.recording) {

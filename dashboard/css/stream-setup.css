@@ -6,3 +6,11 @@
 #preview {
     margin-top: -10px;
 }
+#gameDropdown {
+    margin-left: 10px;
+}
+#buttonDiv {
+    width: 100%;
+    display: inline-block;
+    text-align: center;
+}

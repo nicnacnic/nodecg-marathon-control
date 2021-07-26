@@ -1,8 +1,8 @@
 const stats = nodecg.Replicant('stats');
-const autoRecord = nodecg.Replicant('autoRecord');
+const settings = nodecg.Replicant('settings');
 
 window.addEventListener('load', function() {
-	NodeCG.waitForReplicants(stats, autoRecord).then(() => {
+	NodeCG.waitForReplicants(stats, settings).then(() => {
 		stats.on('change', (newVal) => {
 			document.getElementById("cpuUsage").innerHTML = newVal.cpuUsage.toFixed(1) + '%';
 			document.getElementById("fps").innerHTML = newVal.fps.toFixed(1) + ' FPS';
@@ -13,10 +13,13 @@ window.addEventListener('load', function() {
 			document.getElementById("network").innerHTML = newVal.numDroppedFrames + ' / ' + newVal.numTotalFrames + ' (' + (newVal.numDroppedFrames / newVal.numTotalFrames).toFixed(1) + '%)';
 			document.getElementById("uptime").innerHTML = new Date(newVal.totalStreamTime * 1000).toISOString().substr(11, 8)
 			document.getElementById("diskSpace").innerHTML = (newVal.freeDiskSpace / 1000).toFixed(1) + ' GB';
-			switch (autoRecord.value) {
+		});
+
+		settings.on('change', (newVal) => {
+			switch (newVal.autoRecord) {
                 case true: document.getElementById("autoRecord").innerHTML = 'Active'; break;
                 case false: document.getElementById("autoRecord").innerHTML = 'Inactive'; break;
             }
-		});
+		})
 	});
 });
