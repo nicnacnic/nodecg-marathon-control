@@ -16,9 +16,10 @@
         <paper-input class="input" id="program" type="string" label="Program URL" onChange="changeProgram(this.value)">
         </paper-input>
         <div id="sceneProperties">
-            <paper-dropdown-menu class="dropdown" id="intermissionDropdown" label="Intermission Scene" vertical-offset="60">
+            <paper-dropdown-menu class="dropdown" id="intermissionDropdown" label="Intermission Scene"
+                vertical-offset="60">
                 <paper-listbox slot="dropdown-content" class="dropdown-content" id="intermissionList"
-                    onClick="changeGame(this)">
+                    onClick="changeIntermission(this)">
                 </paper-listbox>
             </paper-dropdown-menu>
             <paper-dropdown-menu class="dropdown" id="gameDropdown" label="Game Scene" vertical-offset="60">
@@ -28,10 +29,16 @@
             </paper-dropdown-menu>
         </div>
         <div id="buttonDiv">
-            <paper-button toggles raised class="button" id="toggleStream" onclick="toggleStream();"></paper-button>
-            <paper-button toggles raised class="button" id="toggleRecording" onclick="toggleRecording();"></paper-button>
+            <paper-button toggles raised class="button" id="toggleStream" onclick="toggleStream(this);"></paper-button>
+            <paper-button toggles raised class="button" id="toggleRecording" onclick="toggleRecording(this);">
+            </paper-button>
             <paper-button toggles raised class="button" id="autoRecord" onclick="toggleAutoRecord();"></paper-button>
-            <paper-button raised class="button" id="Reauthenticate" onclick="reauthenticate();"></paper-button>
+            <paper-button toggles raised class="button" id="autoRunner" onclick="toggleAutoRunner();"></paper-button>
+            <paper-button toggles raised class="button" id="autoLayout" onclick="toggleAutoLayout();"></paper-button>
+            <paper-button raised class="button" id="Reauthenticate" onclick="reauthenticate();">Reauthenticate
+            </paper-button>
+            <paper-button raised class="button" id="showWelcome" nodecg-dialog="welcome">Show Welcome Screen
+            </paper-button>
         </div>
     </div>
     <custom-style>
@@ -70,12 +77,12 @@
             }
 
             paper-button.button[active] {
-				background-color: #990000;
-			}
+                background-color: #990000;
+            }
 
-			paper-button.button[disabled] {
-				background-color: #485264;
-			}
+            paper-button.button[disabled] {
+                background-color: #485264;
+            }
         </style>
     </custom-style>
 </body>

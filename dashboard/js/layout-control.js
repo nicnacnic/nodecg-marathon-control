@@ -1,13 +1,15 @@
+const runDataActiveRun = nodecg.Replicant('runDataActiveRun', 'nodecg-speedcontrol')
 const activeRunners = nodecg.Replicant('activeRunners');
 const sceneList = nodecg.Replicant('sceneList');
 const layoutList = nodecg.Replicant('assets:game-layouts');
 const currentScene = nodecg.Replicant('currentScene');
 const currentLayout = nodecg.Replicant('currentLayout');
+const settings = nodecg.Replicant('settings');
 
 window.addEventListener('load', function () {
 
     // Load replicants.
-    NodeCG.waitForReplicants(activeRunners, sceneList, layoutList, currentScene, currentLayout).then(() => {
+    NodeCG.waitForReplicants(activeRunners, sceneList, layoutList, currentScene, currentLayout, settings).then(() => {
 
         // Populates dropdown with current scenes.
         sceneList.on('change', (newVal) => {
@@ -40,7 +42,7 @@ window.addEventListener('load', function () {
         // Update selected scene if changed in OBS.
         currentScene.on('change', (newVal) => {
             switch (newVal.preview) {
-                case nodecg.bundleConfig.scenes.game: document.getElementById('layoutDropdown').removeAttribute("disabled"); break;
+                case settings.value.gameScene: document.getElementById('layoutDropdown').removeAttribute("disabled"); break;
                 default: document.getElementById('layoutDropdown').setAttribute("disabled", true); break;
             }
             const dropdownContent = document.getElementById('sceneList');
@@ -54,7 +56,7 @@ window.addEventListener('load', function () {
         });
 
         // Update selected layout.
-        currentLayout.on('change', (newVal, oldVal) => {
+        currentLayout.on('change', (newVal) => {
             const dropdownContent = document.getElementById('layoutList');
             const items = dropdownContent.items;
             for (let i = 0; i < items.length; i++) {
@@ -66,11 +68,11 @@ window.addEventListener('load', function () {
         });
 
         // Update active runners and quality.
-        activeRunners.on('change', (newVal, oldVal) => {
+        activeRunners.on('change', (newVal) => {
             for (let i = 0; i < 4; i++) {
                 if (newVal[i].name === null || newVal[i].name === undefined)
                     newVal[i].name = '';
-                document.getElementById('player' + (i + 1)).setAttribute('value', newVal[i].name);
+                document.getElementById('player' + (i + 1)).value = newVal[i].name;
                 const dropdownContent = document.getElementById('player' + (i + 1) + 'QualityList');
                 let items = dropdownContent.items;
                 for (let j = 0; j < items.length; j++) {
@@ -88,6 +90,33 @@ window.addEventListener('load', function () {
                 switch (newVal[i].cam) {
                     case true: document.getElementById('player' + (i + 1) + 'CamButton').innerHTML = 'videocam'; document.getElementById('player' + (i + 1) + 'CamButton').style.color = 'white'; break;
                     case false: document.getElementById('player' + (i + 1) + 'CamButton').innerHTML = 'videocam_off'; document.getElementById('player' + (i + 1) + 'CamButton').style.color = 'red'; break;
+                }
+            }
+        });
+
+        // Updates active runners if auto-update runners is enabled.
+        runDataActiveRun.on('change', (newVal) => {
+            if (settings.value.autoSetRunners) {
+                let i = 0;
+                newVal.teams.forEach(team => {
+                    team.players.forEach(player => {
+                        if (player.social.twitch !== undefined)
+                            activeRunners.value[i].name = player.social.twitch;
+                        else
+                            activeRunners.value[i].name = '';
+                        i++;
+                    })
+                })
+            }
+            if (settings.value.autoSetLayout && newVal.customData !== undefined && newVal.customData.layout !== undefined) {
+                const dropdownContent = document.getElementById('layoutList');
+                const items = dropdownContent.items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].outerText === newVal.customData.layout) {
+                        currentLayout.value = newVal.customData.layout;
+                        dropdownContent.selectIndex(i);
+                        break;
+                    }
                 }
             }
         });

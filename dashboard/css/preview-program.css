@@ -9,7 +9,8 @@
 	width: 434px;
 	height: 270px;
 	display: inline-block;
-    float: left
+    float: left;
+	overflow: hidden;
 }
 #transitionDiv {
 	width: 360px;
@@ -34,5 +35,6 @@
 	width: 434px;
 	height: 270px;
 	display: inline-block;
-    float: right
+    float: right;
+	overflow: hidden;
 }

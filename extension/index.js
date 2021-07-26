@@ -1,31 +1,31 @@
 const { settings } = require('cluster');
 const OBSWebSocket = require('obs-websocket-js');
-const { setDefaultLayoutProperties, setDefaultIntermissionProperties, statsValue, settingsValue } = require('./defaultValues');
+const { setDefaultLayoutProperties, setDefaultIntermissionProperties, activeRunnersValue, statsValue, settingsValue } = require('./defaultValues');
 
 module.exports = function (nodecg) {
     const obs = new OBSWebSocket();
     let connectionError = false;
 
     // Initialize replicants.
-    const activeRunners = nodecg.Replicant('activeRunners', { defaultValue: [{ name: '', quality: 'Auto', mute: true, cam: false }, { name: '', quality: 'Auto', mute: true, cam: false }, { name: '', quality: 'Auto', mute: true, cam: false }, { name: '', quality: 'Auto', mute: true, cam: false }] });
-    const streamStatus = nodecg.Replicant('streamStatus', { defaultValue: { streaming: false, recording: false } });
-    const sceneList = nodecg.Replicant('sceneList', { persistent: false });
+    const activeRunners = nodecg.Replicant('activeRunners', { defaultValue: activeRunnersValue });
+    const sceneList = nodecg.Replicant('sceneList');
     const currentScene = nodecg.Replicant('currentScene', { defaultValue: { preview: "", program: "" } });
     const currentLayout = nodecg.Replicant('currentLayout');
-    const currentCrop = nodecg.Replicant('currentCrop');
-    const audioSources = nodecg.Replicant('audioSources');
-    const showBorders = nodecg.Replicant('showBorders', { defaultValue: false })
-    const fontFaces = nodecg.Replicant('fontFaces', { defaultValue: [] })
-    const intermissionProperties = nodecg.Replicant('intermissionProperties', { defaultValue: [] });
-    const timerColors = nodecg.Replicant('timerColors', { defaultValue: { running: 'FFFFFF', stopped: 'FFFFFF', paused: 'FFFFFF', finished: 'FFFFFF' } })
     const layoutList = nodecg.Replicant('assets:game-layouts');
+    const audioSources = nodecg.Replicant('audioSources');
     const layoutProperties = nodecg.Replicant('layoutProperties', { defaultValue: [] })
+    const intermissionProperties = nodecg.Replicant('intermissionProperties', { defaultValue: [] });
+    const fontFaces = nodecg.Replicant('fontFaces', { defaultValue: [] })
+    const timerColors = nodecg.Replicant('timerColors', { defaultValue: { running: 'FFFFFF', stopped: 'FFFFFF', paused: 'FFFFFF', finished: 'FFFFFF' } })
+    const showBorders = nodecg.Replicant('showBorders', { defaultValue: false })
     const stats = nodecg.Replicant('stats', { defaultValue: statsValue });
     const settings = nodecg.Replicant('settings', { defaultValue: settingsValue })
     const firstLaunch = nodecg.Replicant('firstLaunch', { defaultValue: true })
 
     obs.connect({ address: nodecg.bundleConfig.websocketAddress, password: nodecg.bundleConfig.websocketPassword }).then(async () => {
         nodecg.log.info('Connected to OBS instance!')
+
+        settings.value.emergencyTransition = false;
 
         // Get OBS data.
         obs.send('GetStudioModeStatus').then(result => {
@@ -53,6 +53,9 @@ module.exports = function (nodecg) {
         obs.on('TransitionEnd', (data) => toggleAutoRecord(data))
         obs.on('SourceCreated', () => getAudioSources())
         obs.on('SourceDestroyed', () => getAudioSources())
+        obs.on('ScenesChanged', (data) => sceneList.value = data.scenes)
+        obs.on('SwitchScenes', (data) => currentScene.value.program = data.sceneName)
+        obs.on('PreviewSceneChanged', (data) => currentScene.value.preview = data.sceneName)
         obs.on('SourceVolumeChanged', (data) => {
             audioSources.value.forEach(element => {
                 if (element.name === data.sourceName) {
@@ -82,6 +85,18 @@ module.exports = function (nodecg) {
         nodecg.listenFor('transitionToProgram', () => obs.send('TransitionToProgram'))
         nodecg.listenFor('toggleStream', () => obs.send('StartStopStreaming'))
         nodecg.listenFor('toggleRecording', () => obs.send('StartStopRecording'))
+        nodecg.listenFor('reauthenticate', () => {
+            obs.disconnect();
+            obs.connect({ address: nodecg.bundleConfig.websocketAddress, password: nodecg.bundleConfig.websocketPassword }).then(() => {
+                nodecg.log.warn('Reauthentication requested on ' + Date() + '.')
+            }).catch((error) => websocketError(error));
+        })
+
+        // Change preview scene.
+        currentScene.on('change', (newVal, oldVal) => {
+            if (newVal !== undefined && oldVal !== undefined)
+                obs.send('SetPreviewScene', { "scene-name": newVal.preview }).catch((error) => websocketError(error));
+        });
 
         if (intermissionProperties.value.length < 27)
             setDefaultIntermissionProperties((callback) => intermissionProperties.value = callback);
@@ -134,11 +149,13 @@ module.exports = function (nodecg) {
         function toggleAutoRecord(data) {
             nodecg.sendMessage('transitionEnd')
             if (settings.value.autoRecord) {
-                if (data.toScene !== settings.value.intermissionScene && !streamStatus.value.recording) {
+                if (data.toScene !== settings.value.intermissionScene && !settings.value.recording) {
+                    settings.value.emergencyTransition = false;
                     obs.send('StartRecording').catch((error) => websocketError(error));
-                    settings.value.emergencyTransition.value = false;
                 }
-                else if (data.toScene === settings.value.intermissionScene && streamStatus.value.recording && !settings.value.emergencyTransition)
+                else if (data.toScene !== settings.value.intermissionScene)
+                    settings.value.emergencyTransition = false;
+                else if (data.toScene === settings.value.intermissionScene && settings.value.recording && !settings.value.emergencyTransition)
                     obs.send('StopRecording').catch((error) => websocketError(error));
             }
         }

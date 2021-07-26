@@ -819,6 +819,33 @@ function setDefaultIntermissionProperties(callback) {
     callback(properties);
 }
 
+const activeRunnersValue = [
+    {
+        name: '', 
+        quality: 'Auto',
+        mute: true, 
+        cam: false
+    },
+    {
+        name: '', 
+        quality: 'Auto',
+        mute: true, 
+        cam: false
+    },
+    {
+        name: '', 
+        quality: 'Auto',
+        mute: true, 
+        cam: false
+    },
+    {
+        name: '', 
+        quality: 'Auto',
+        mute: true, 
+        cam: false
+    }
+]
+
 const statsValue = {
     cpuUsage: 0.00,
     fps: 0.00,
@@ -842,6 +869,8 @@ const settingsValue = {
     intermissionScene: '',
     gameScene: '',
     autoRecord: false,
+    autoSetLayout: false,
+    autoSetRunners: false,
     emergencyTransition: false
 }
-module.exports = { setDefaultLayoutProperties, setDefaultIntermissionProperties, statsValue, settingsValue };
+module.exports = { setDefaultLayoutProperties, setDefaultIntermissionProperties, activeRunnersValue, statsValue, settingsValue };

@@ -84,16 +84,16 @@
         "file": "preview-program.html"
       },
       {
-        "name": "layout-control",
-        "title": "Layout Control",
-        "width": 3,
-        "file": "layout-control.html"
-      },
-      {
         "name": "audio",
         "title": "Audio",
         "width": 3,
         "file": "audio.html"
+      },
+      {
+        "name": "layout-control",
+        "title": "Layout Control",
+        "width": 3,
+        "file": "layout-control.html"
       },
       {
         "name": "stats",
@@ -102,24 +102,17 @@
         "file": "stats.html"
       },
       {
+        "name": "about",
+        "title": "About",
+        "width": 4,
+        "file": "about.html",
+        "workspace": "Settings"
+      },
+      {
         "name": "layout-setup",
         "title": "Game Layout",
         "width": 3,
         "file": "layout-setup.html",
-        "workspace": "Settings"
-      },
-      {
-        "name": "twitch-setup",
-        "title": "Twitch Players",
-        "width": 3,
-        "file": "twitch-setup.html",
-        "workspace": "Settings"
-      },
-      {
-        "name": "timer-colors",
-        "title": "Timer Colors",
-        "width": 3,
-        "file": "timer-colors.html",
         "workspace": "Settings"
       },
       {
@@ -130,6 +123,13 @@
         "workspace": "Settings"
       },
       {
+        "name": "twitch-setup",
+        "title": "Twitch Players",
+        "width": 3,
+        "file": "twitch-setup.html",
+        "workspace": "Settings"
+      },
+      {
         "name": "stream-setup",
         "title": "OBS Properties",
         "width": 3,
@@ -137,16 +137,16 @@
         "workspace": "Settings"
       },
       {
-        "name": "about",
-        "title": "About",
+        "name": "timer-colors",
+        "title": "Timer Colors",
         "width": 3,
-        "file": "about.html",
+        "file": "timer-colors.html",
         "workspace": "Settings"
       },
       {
         "name": "welcome",
-        "title": "Welcome!",
-        "width": 4,
+        "title": "",
+        "width": 5,
         "dialog": true,
         "dialogButtons": [
           {
