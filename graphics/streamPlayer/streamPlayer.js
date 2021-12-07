@@ -16,8 +16,11 @@ function createPlayer(num) {
 
 function attatchStream() {
     activeRunners.on('change', (newVal) => {
-        hls.loadSource(`${nodecg.bundleConfig.baseRtmlUrl}${newVal[playerID].streamKey}.m3u8`);
-        hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => video.play());
+        if (newVal[playerID].streamKey !== '') {
+            hls.loadSource(`${nodecg.bundleConfig.baseRtmlUrl}${newVal[playerID].streamKey}.m3u8`);
+            hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => video.play());
+        }
+        else streamSync.value.delay[playerID] = null;
     })
 }
 
