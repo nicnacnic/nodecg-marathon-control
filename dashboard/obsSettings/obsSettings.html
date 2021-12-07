@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
+    <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <link rel="stylesheet" href="obsSettings.css" />
+    <script src="obsSettings.js"></script>
+</head>
+
+<body>
+    <button id="toggleStream" onClick="toggleStream(this)"></button>
+    <button id="toggleRecording" onClick="toggleRecording(this)"></button>
+    <button id="autoRunner" onClick="settings.value.autoSetRunners = !settings.value.autoSetRunners"></button>
+    <button id="autoLayout" onClick="settings.value.autoSetLayout = !settings.value.autoSetLayout"></button>
+    <button id="selectPreviewWindow" onClick="setPreviewWindow()">Select Preview Window</button>
+    <button id="selectProgramWindow" onClick="setProgramWindow()">Select Program Window</button>
+    <button id="reauthenticate" onClick="nodecg.sendMessage('reauthenticate')">Reauthenticate</button>
+    <button id="showWelcome" nodecg-dialog="welcome">Show Welcome Screen</button>
+</body>
+
+</html>

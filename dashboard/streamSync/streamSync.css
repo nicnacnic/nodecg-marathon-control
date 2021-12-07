@@ -1,0 +1,15 @@
+button {
+    margin-bottom: 8px;
+}
+.input {
+    width: 30%;
+    margin: 7.5px;
+}
+#topRow {
+    text-align: center;
+    display: inline-block;
+}
+#bottomRow {
+    text-align: center;
+    display: inline-block;
+}

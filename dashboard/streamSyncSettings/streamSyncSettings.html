@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
+    <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <link rel="stylesheet" href="streamSyncSettings.css" />
+    <script src="streamSyncSettings.js"></script>
+</head>
+
+<body>
+    <button id="streamSync" onClick="streamSync.value.active = !streamSync.value.active"></button>
+    <div class="input">
+        <input type="text" id="maxOffset" onChange="streamSync.value.maxOffset = this.value"></input>
+        <label>Max Offset</label>
+        <div class="inputBorder"></div>
+    </div>
+</body>
+
+</html>

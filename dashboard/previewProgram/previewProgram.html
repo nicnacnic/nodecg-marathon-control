@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
+	<script src="../nodecgComponents/nodecgComponents.js"></script>
+	<link rel="stylesheet" href="previewProgram.css" />
+	<script src="previewProgram.js"></script>
+</head>
+
+<body>
+	<!--
+    <div id="main">
+		<button hidden id="test" nodecg-dialog="welcome"></button>
+    <div id="previewDiv">
+        <iframe id="preview" width="434" height="270" frameBorder="0"
+            allow="autoplay"></iframe>
+    </div>
+	-->
+	<iframe id="preview" frameBorder="0" allow="autoplay"></iframe>
+	<div id="transitionDiv">
+		<div id="streamStatus">
+			<span id="streaming" class="material-icons"
+				style="font-size: 24px; vertical-align:middle; margin-right: 3px;">surround_sound</span>
+			<span id="recording" class="material-icons"
+				style="font-size: 24px; vertical-align:middle; margin-left: 3px;">fiber_manual_record</span>
+		</div>
+		<div id="transitionButtons">
+			<button id="transition" onclick="nodecg.sendMessage('startTransition')">
+				Transition</button>
+			<button id="emergency" onclick="nodecg.sendMessage('emergencyTransition')">
+				Emergency Transition</button>
+		</div>
+	</div>
+	<iframe id="program" frameBorder="0" allow="autoplay"></iframe>
+</body>
+
+</html>

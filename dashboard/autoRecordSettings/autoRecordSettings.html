@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
+    <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <link rel="stylesheet" href="autoRecordSettings.css" />
+    <script src="autoRecordSettings.js"></script>
+</head>
+
+<body>
+    <button id="autoRecord" onClick="autoRecord.value.active = !autoRecord.value.active"></button>
+    <div class="input">
+        <input type="text" id="filenameFormatting" onChange="autoRecord.value.filenameFormatting = this.value"></input>
+        <label>Filename Formatting</label>
+        <div class="inputBorder"></div>
+    </div>
+    <div class="select">
+        <select id="intermissionScene" onChange="settings.value.intermissionScene = this.value">
+        </select>
+        <label>Intermission Scene</label>
+        <div class="selectBorder"></div>
+    </div>
+    <button id="toggleTable" onClick="toggleTable()">Toggle Variables</button>
+    <table id="variableTable">
+        <tbody>
+            <tr>
+                <td>%GAME</td>
+                <td>Game name</td>
+            </tr>
+            <tr>
+                <td>%CAT</td>
+                <td>Category</td>
+            </tr>
+            <tr>
+                <td>%RGN</td>
+                <td>Region</td>
+            </tr>
+            <tr>
+                <td>%REL</td>
+                <td>Release</td>
+            </tr>
+            <tr>
+                <td>%TWIT</td>
+                <td>Game, Twitch</td>
+            </tr>
+            <tr>
+                <td>%SYS</td>
+                <td>System</td>
+            </tr>
+            <tr>
+                <td>%EST</td>
+                <td>Estimate</td>
+            </tr>
+            <tr>
+                <td>%SET</td>
+                <td>Setup Time</td>
+            </tr>
+            <tr>
+                <td>%RNR</td>
+                <td>Runner</td>
+            </tr>
+            <tr>
+                <td>%CCYY</td>
+                <td>Year, four digits</td>
+            </tr>
+            <tr>
+                <td>%YY</td>
+                <td>Year, last two digits (00-99)</td>
+            </tr>
+            <tr>
+                <td>%MM</td>
+                <td>Month as a decimal number (01-12)</td>
+            </tr>
+            <tr>
+                <td>%DD</td>
+                <td>Day of the month, zero-padded (01-31)</td>
+            </tr>
+            <tr>
+                <td>%hh</td>
+                <td>Hour in 24h format (00-23)</td>
+            </tr>
+            <tr>
+                <td>%mm</td>
+                <td>Minute (00-59)</td>
+            </tr>
+            <tr>
+                <td>%ss</td>
+                <td>Second (00-61)</td>
+            </tr>
+            <tr>
+                <td>%%</td>
+                <td>A % sign</td>
+            </tr>
+            <tr>
+                <td>%a</td>
+                <td>Abbreviated weekday name</td>
+            </tr>
+            <tr>
+                <td>%A</td>
+                <td>Full weekday name</td>
+            </tr>
+            <tr>
+                <td>%b</td>
+                <td>Abbreviated month name</td>
+            </tr>
+            <tr>
+                <td>%B</td>
+                <td>Full month name</td>
+            </tr>
+            <tr>
+                <td>%d</td>
+                <td>Day of the month, zero-padded (01-31)</td>
+            </tr>
+            <tr>
+                <td>%H</td>
+                <td>Hour in 24h format (00-23)</td>
+            </tr>
+            <tr>
+                <td>%l</td>
+                <td>Hour in 12h format (01-12)</td>
+            </tr>
+            <tr>
+                <td>%m</td>
+                <td>Month as a decimal number (01-12)</td>
+            </tr>
+            <tr>
+                <td>%M</td>
+                <td>Minute (00-59)</td>
+            </tr>
+            <tr>
+                <td>%p</td>
+                <td>AM or PM designation</td>
+            </tr>
+            <tr>
+                <td>%S</td>
+                <td>Second (00-61)</td>
+            </tr>
+            <tr>
+                <td>%y</td>
+                <td>Year, last two digits (00-99)</td>
+            </tr>
+            <tr>
+                <td>%Y</td>
+                <td>Year</td>
+            </tr>
+            <tr>
+                <td>%z</td>
+                <td>ISO 8601 offset from UTC in timezone</td>
+            </tr>
+            <tr>
+                <td>%Z</td>
+                <td>Timezone name or abbreviation</td>
+            </tr>
+            <tr>
+                <td>%FPS</td>
+                <td>Frames per second</td>
+            </tr>
+            <tr>
+                <td>%CRES</td>
+                <td>Base (canvas) resolution</td>
+            </tr>
+            <tr>
+                <td>%ORES</td>
+                <td>Output (scaled) resolution</td>
+            </tr>
+            <tr>
+                <td>%VF</td>
+                <td>Video format</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+
+</html>

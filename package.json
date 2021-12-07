@@ -7,140 +7,66 @@
   "author": "nicnacnic",
   "nodecg": {
     "compatibleRange": "^1.8.1",
-    "assetCategories": [
-      {
-        "name": "intermission-layout",
-        "title": "Intermission Layout",
-        "allowedTypes": [
-          "jpg",
-          "jpeg",
-          "gif",
-          "png"
-        ]
-      },
-      {
-        "name": "game-layouts",
-        "title": "Game Layouts",
-        "allowedTypes": [
-          "jpg",
-          "jpeg",
-          "gif",
-          "png"
-        ]
-      },
-      {
-        "name": "cam-cover",
-        "title": "Cam Covers",
-        "allowedTypes": [
-          "jpg",
-          "jpeg",
-          "gif",
-          "png"
-        ]
-      },
-      {
-        "name": "marathon-logo",
-        "title": "Marathon Logo",
-        "allowedTypes": [
-          "jpg",
-          "jpeg",
-          "gif",
-          "png"
-        ]
-      },
-      {
-        "name": "charity-logo",
-        "title": "Charity Logo",
-        "allowedTypes": [
-          "jpg",
-          "jpeg",
-          "gif",
-          "png"
-        ]
-      },
-      {
-        "name": "sponsor-logos",
-        "title": "Sponsor Logos",
-        "allowedTypes": [
-          "jpg",
-          "jpeg",
-          "gif",
-          "png"
-        ]
-      },
-      {
-        "name": "fonts",
-        "title": "Fonts",
-        "allowedTypes": [
-          "ttf"
-        ]
-      }
-    ],
+    "bundleDependencies": {
+      "nodecg-speedcontrol": "^2.4.0"
+    },
     "dashboardPanels": [
       {
-        "name": "preview-program",
+        "name": "previewProgram",
         "title": "Preview/Program",
         "width": 9,
-        "file": "preview-program.html"
+        "file": "previewProgram/previewProgram.html"
       },
       {
         "name": "audio",
         "title": "Audio",
         "width": 3,
-        "file": "audio.html"
+        "file": "audio/audio.html"
       },
       {
-        "name": "layout-control",
-        "title": "Layout Control",
+        "name": "sceneControl",
+        "title": "Scene Control",
         "width": 3,
-        "file": "layout-control.html"
+        "file": "sceneControl/sceneControl.html"
+      },
+      {
+        "name": "streamSync",
+        "title": "StreamSync™",
+        "width": 3,
+        "file": "streamSync/streamSync.html"
       },
       {
         "name": "stats",
         "title": "Stats",
         "width": 3,
-        "file": "stats.html"
+        "file": "stats/stats.html"
       },
       {
         "name": "about",
         "title": "About",
         "width": 4,
-        "file": "about.html",
+        "file": "about/about.html",
         "workspace": "Settings"
       },
       {
-        "name": "layout-setup",
-        "title": "Game Layout",
+        "name": "obsSettings",
+        "title": "General",
         "width": 3,
-        "file": "layout-setup.html",
+        "file": "obsSettings/obsSettings.html",
         "workspace": "Settings"
       },
       {
-        "name": "intermission-setup",
-        "title": "Intermission",
+        "name": "autoRecordSettings",
+        "title": "Auto Record",
         "width": 3,
-        "file": "intermission-setup.html",
+        "file": "autoRecordSettings/autoRecordSettings.html",
         "workspace": "Settings"
       },
       {
-        "name": "twitch-setup",
-        "title": "Twitch Players",
+        "name": "streamSyncSettings",
+        "title": "Stream Sync",
         "width": 3,
-        "file": "twitch-setup.html",
-        "workspace": "Settings"
-      },
-      {
-        "name": "stream-setup",
-        "title": "OBS Properties",
-        "width": 3,
-        "file": "stream-setup.html",
-        "workspace": "Settings"
-      },
-      {
-        "name": "timer-colors",
-        "title": "Timer Colors",
-        "width": 3,
-        "file": "timer-colors.html",
+        "file": "streamSyncSettings/streamSyncSettings.html",
         "workspace": "Settings"
       },
       {
@@ -154,37 +80,37 @@
             "type": "confirm"
           }
         ],
-        "file": "welcome.html"
+        "file": "welcome/welcome.html"
       }
     ],
     "graphics": [
       {
-        "file": "intermission.html",
+        "file": "streamPlayer/streamPlayer1.html",
         "width": 1920,
-        "height": 1080
+        "height": 1080,
+        "singleInstance": true
       },
       {
-        "file": "game.html",
+        "file": "streamPlayer/streamPlayer2.html",
         "width": 1920,
-        "height": 1080
+        "height": 1080,
+        "singleInstance": true
+      },
+      {
+        "file": "streamPlayer/streamPlayer3.html",
+        "width": 1920,
+        "height": 1080,
+        "singleInstance": true
+      },
+      {
+        "file": "streamPlayer/streamPlayer4.html",
+        "width": 1920,
+        "height": 1080,
+        "singleInstance": true
       }
     ]
   },
   "dependencies": {
-    "@polymer/paper-button": "^3.0.1",
-    "@polymer/paper-checkbox": "^3.0.1",
-    "@polymer/paper-dropdown-menu": "^3.2.0",
-    "@polymer/paper-input": "^3.2.1",
-    "@polymer/paper-item": "^3.0.1",
-    "@polymer/paper-listbox": "^3.0.1",
-    "@polymer/paper-slider": "^3.0.1",
-    "@polymer/paper-styles": "^3.0.1",
-    "@polymer/paper-toggle-button": "^3.0.1",
-    "@polymer/polymer": "^3.4.1",
-    "obs-websocket-js": "^4.0.2"
-  },
-  "devDependencies": {
-    "@rollup/plugin-node-resolve": "^13.0.0",
-    "rollup": "^2.45.2"
+    "obs-websocket-js": "4.0.3"
   }
 }

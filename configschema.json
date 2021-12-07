@@ -2,41 +2,54 @@
     "$id": "http://example.com/example.json",
     "$schema": "http://json-schema.org/draft-07/schema",
     "default": {
-        "websocketAddress": "localhost:4444",
-        "websocketPassword": "password"
+        "address": "localhost:4444",
+        "password": "password",
+        "botToken": ""
     },
     "description": "The root schema comprises the entire JSON document.",
     "examples": [
         {
-            "websocketAddress": "localhost:4444",
-            "websocketPassword": "password"
+            "address": "localhost:4444",
+            "password": "password",
+            "botToken": ""
         }
     ],
     "required": [
-        "websocketAddress",
-        "websocketPassword"
+        "address",
+        "password",
+        "botToken"
     ],
     "title": "The root schema",
     "type": "object",
     "properties": {
-        "websocketAddress": {
-            "$id": "#/properties/websocketAddress",
+        "address": {
+            "$id": "#/properties/address",
             "type": "string",
-            "title": "The websocketAddress schema",
+            "title": "The address schema",
             "description": "An explanation about the purpose of this instance.",
             "default": "",
             "examples": [
                 "localhost:4444"
             ]
         },
-        "websocketPassword": {
-            "$id": "#/properties/websocketPassword",
+        "password": {
+            "$id": "#/properties/password",
             "type": "string",
-            "title": "The websocketPassword schema",
+            "title": "The password schema",
             "description": "An explanation about the purpose of this instance.",
             "default": "",
             "examples": [
                 "password"
+            ]
+        },
+        "botToken": {
+            "$id": "#/properties/botToken",
+            "type": "string",
+            "title": "The botToken schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
             ]
         }
     },
