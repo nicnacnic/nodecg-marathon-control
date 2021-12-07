@@ -4,20 +4,20 @@
     "default": {
         "address": "localhost:4444",
         "password": "password",
-        "botToken": ""
+        "baseRtmlUrl": "https://rtmp.example.com/hls/"
     },
     "description": "The root schema comprises the entire JSON document.",
     "examples": [
         {
             "address": "localhost:4444",
             "password": "password",
-            "botToken": ""
+            "baseRtmlUrl": "https://rtmp.example.com/hls/"
         }
     ],
     "required": [
         "address",
         "password",
-        "botToken"
+        "baseRtmlUrl"
     ],
     "title": "The root schema",
     "type": "object",
@@ -42,14 +42,14 @@
                 "password"
             ]
         },
-        "botToken": {
-            "$id": "#/properties/botToken",
+        "baseRtmlUrl": {
+            "$id": "#/properties/baseRtmlUrl",
             "type": "string",
-            "title": "The botToken schema",
+            "title": "The baseRtmlUrl schema",
             "description": "An explanation about the purpose of this instance.",
             "default": "",
             "examples": [
-                ""
+                "https://rtmp.example.com/hls/"
             ]
         }
     },
