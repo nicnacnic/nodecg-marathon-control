@@ -15,7 +15,7 @@ window.addEventListener('load', () => {
                 Object.defineProperty(input, 'value', {
                     get() { return get.call(this); },
                     set(newVal) {
-                        if (newVal !== undefined && newVal !== undefined && newVal.toString().length > 0)
+                        if (newVal !== undefined && newVal !== null && newVal !== '' && newVal.toString().length > 0)
                             input.nextElementSibling.classList.add('inputLabelFocus')
                         else
                             input.nextElementSibling.classList.remove('inputLabelFocus')
