@@ -1,10 +1,10 @@
-const settings = nodecg.Replicant('settings');
+const settings = nodecg.Replicant('settings')
 const firstLaunch = nodecg.Replicant('firstLaunch')
 const currentLayout = nodecg.Replicant('currentLayout')
 const previewProgram = nodecg.Replicant('previewProgram')
+const twitchCommercialTimer = nodecg.Replicant('twitchCommercialTimer', 'nodecg-speedcontrol')
 
-window.addEventListener('load', () => {
-
+window.onload = () => {
     NodeCG.waitForReplicants(settings, firstLaunch, currentLayout, previewProgram).then(() => {
 
         // Open welcome dialog on first launch.
@@ -42,5 +42,13 @@ window.addEventListener('load', () => {
                 case false: document.getElementById("emergency").removeAttribute("disabled"); break;
             }
         })
+
+        // Disable transition button if commercial is running.
+        twitchCommercialTimer.on('change', (newVal) => {
+            switch (newVal.secondsRemaining) {
+                case 0: document.getElementById("transition").removeAttribute("disabled"); break;
+                default: document.getElementById("transition").setAttribute("disabled", "true"); break;
+            }
+        })
     });
-});
+}

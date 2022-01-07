@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <script> window.ncgConfig = { "host": "0.0.0.0", "port": 9090, "developer": false, "baseURL": "localhost:9090", "logging": { "replicants": false, "console": { "enabled": true, "timestamps": false, "level": "info" }, "file": { "enabled": false, "level": "info", "timestamps": true } }, "sentry": {}, "login": {} };</script>
+    <script src="/nodecg-api.min.js"></script>
+    <link rel="stylesheet" href="/dashboard/css/panel-and-dialog-defaults.css">
+    <script src="/node_modules/cookies-js/dist/cookies.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script async src="/dashboard/js/dialog_opener.js"></script>
+</head>
+
+<body>
+    <div></div>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        div {
+            position: absolute;
+            top: 1030px;
+            width: 50px;
+            height: 50px;
+        }
+    </style>
+    <script>
+        window["_gaUserPrefs"] = { ioo: function () { return true; } }
+        const params = new URLSearchParams(location.search);
+        window.token = params.key || Cookies.get('socketToken');
+        if (window.token) {
+            window.socket = io(undefined, { query: 'token=' + window.token });
+        } else {
+            window.socket = io();
+        }
+        window.nodecg = new NodeCG({ "name": "nodecg-marathon-control" }, window.socket)
+        nodecg.listenFor('flashSquare', () => {
+            let div = document.querySelector('div');
+            div.style.backgroundColor = "rgb(255, 0, 0)";
+            setTimeout(() => div.style.backgroundColor = "transparent", 1000)
+        })
+    </script>
+</body>
+
+</html>

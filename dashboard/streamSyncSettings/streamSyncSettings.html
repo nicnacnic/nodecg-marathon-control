@@ -5,17 +5,37 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
     <script src="../nodecgComponents/nodecgComponents.js"></script>
-    <link rel="stylesheet" href="streamSyncSettings.css" />
-    <script src="streamSyncSettings.js"></script>
 </head>
 
 <body>
+    <style>
+        .input {
+            margin-top: 17px;
+        }
+    </style>
     <button id="streamSync" onClick="streamSync.value.active = !streamSync.value.active"></button>
     <div class="input">
         <input type="text" id="maxOffset" onChange="streamSync.value.maxOffset = this.value"></input>
         <label>Max Offset</label>
         <div class="inputBorder"></div>
     </div>
+    <script>
+        const streamSync = nodecg.Replicant('streamSync');
+
+        window.addEventListener('load', () => {
+
+            NodeCG.waitForReplicants(streamSync).then(() => {
+
+                streamSync.on('change', (newVal) => {
+                    switch (newVal.autoSync) {
+                        case true: document.getElementById('streamSync').innerHTML = 'Turn Off Auto Stream Sync'; document.getElementById("streamSync").style.backgroundColor = '#990000'; document.getElementById("maxOffset").disabled = false; break;
+                        case false: document.getElementById('streamSync').innerHTML = 'Turn On Auto Stream Sync'; document.getElementById("streamSync").style.backgroundColor = '#272727'; document.getElementById("maxOffset").disabled = true; break;
+                    }
+                    document.getElementById('maxOffset').value = newVal.maxOffset;
+                })
+            })
+        })
+    </script>
 </body>
 
 </html>

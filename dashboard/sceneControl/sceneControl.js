@@ -4,7 +4,7 @@ const sceneList = nodecg.Replicant('sceneList');
 const currentScene = nodecg.Replicant('currentScene');
 const settings = nodecg.Replicant('settings');
 
-window.addEventListener('load', () => {
+window.onload = () => {
 
     // Load replicants.
     NodeCG.waitForReplicants(activeRunners, sceneList, currentScene, settings).then(() => {
@@ -32,5 +32,12 @@ window.addEventListener('load', () => {
                 }
             }
         });
-    })
-})
+    });
+}
+
+function getStream(num, player) {
+    nodecg.sendMessage('getStreamURL', player).then(result => {
+        activeRunners.value[num].streamKey = player;
+        activeRunners.value[num].url = result;
+    }).catch(error => console.error(error));
+}

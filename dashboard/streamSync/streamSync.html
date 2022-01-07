@@ -5,12 +5,30 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
     <script src="../nodecgComponents/nodecgComponents.js"></script>
-    <link rel="stylesheet" href="streamSync.css" />
-    <script src="streamSync.js"></script>
 </head>
 
-<body>
-    <button id="syncStreams" onClick="streamSync.value.forceSync = true">Sync Streams</button>
+<body onLoad="loadReplicants()">
+    <style>
+        button {
+            margin-bottom: 8px;
+        }
+
+        .input {
+            width: 30%;
+            margin: 7.5px;
+        }
+
+        #topRow {
+            text-align: center;
+            display: inline-block;
+        }
+
+        #bottomRow {
+            text-align: center;
+            display: inline-block;
+        }
+    </style>
+    <button id="syncStreams" onClick="streamSync.value.startSync = true">Sync Streams</button>
     <div id="topRow">
         <div class="input">
             <input disabled type="text" id="0"></input>
@@ -35,6 +53,32 @@
             <div class="inputBorder"></div>
         </div>
     </div>
+    <script>
+        const streamSync = nodecg.Replicant('streamSync')
+
+        function loadReplicants() {
+
+            // Load replicants.
+            NodeCG.waitForReplicants(streamSync).then(() => {
+
+                // Sync streams button.
+                streamSync.on('change', (newVal) => {
+                    if (newVal.syncing || newVal.startSync) {
+                        document.getElementById('syncStreams').disabled = true;
+                        document.getElementById('syncStreams').innerHTML = 'Syncing...';
+                    }
+                    else {
+                        document.getElementById('syncStreams').disabled = false;
+                        document.getElementById('syncStreams').innerHTML = 'Sync Streams';
+                    }
+                    document.getElementById('0').value = newVal.delay[0];
+                    document.getElementById('1').value = newVal.delay[1];
+                    document.getElementById('2').value = newVal.delay[2];
+                    document.getElementById('3').value = newVal.delay[3];
+                })
+            });
+        }
+    </script>
 </body>
 
 </html>

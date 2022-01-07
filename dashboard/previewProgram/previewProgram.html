@@ -10,21 +10,11 @@
 </head>
 
 <body>
-	<!--
-    <div id="main">
-		<button hidden id="test" nodecg-dialog="welcome"></button>
-    <div id="previewDiv">
-        <iframe id="preview" width="434" height="270" frameBorder="0"
-            allow="autoplay"></iframe>
-    </div>
-	-->
 	<iframe id="preview" frameBorder="0" allow="autoplay"></iframe>
 	<div id="transitionDiv">
 		<div id="streamStatus">
-			<span id="streaming" class="material-icons"
-				style="font-size: 24px; vertical-align:middle; margin-right: 3px;">surround_sound</span>
-			<span id="recording" class="material-icons"
-				style="font-size: 24px; vertical-align:middle; margin-left: 3px;">fiber_manual_record</span>
+			<span id="streaming" class="material-icons">surround_sound</span>
+			<span id="recording" class="material-icons">fiber_manual_record</span>
 		</div>
 		<div id="transitionButtons">
 			<button id="transition" onclick="nodecg.sendMessage('startTransition')">

@@ -3,63 +3,97 @@
 
 <head>
 	<meta charset="UTF-8">
-	<link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
-	<script src="../nodecgComponents/nodecgComponents.js"></script>
-	<link rel="stylesheet" href="stats.css" />
-	<script src="stats.js"></script>
 </head>
 
 <body>
-    <div id="main">
-		<table class="table">
-			<tbody>
-				<tr>
-					<td>CPU Usage</td>
-					<td id="cpuUsage" class="data">0.0%</td>
-				</tr>
-				<tr>
-					<td>Frames Per Second</td>
-					<td id="fps" class="data">0.0 FPS</td>
-				</tr>
-				<tr>
-					<td>Bitrate</td>
-					<td id="bitrate" class="data">0 kb/s</td>
-				</tr>
-				<tr>
-					<td>Frame Time</td>
-					<td id="frameTime" class="data">0.0 ms</td>
-				</tr>
-				<tr>
-					<td>Missed Frames</td>
-					<td id="rendering" class="data">0 / 0 (0.0%)</td>
-				</tr>
-				<tr>
-					<td>Skipped Frames</td>
-					<td id="encoding" class="data">0 / 0 (0.0%)</td>
-				</tr>
-				<tr>
-					<td>Dropped Frames</td>
-					<td id="network" class="data">0 / 0 (0.0%)</td>
-				</tr>
-				<tr>
-					<td>Uptime</td>
-					<td id="uptime" class="data">00:00:00</td>
-				</tr>
-				<tr>
-					<td>Disk Space</td>
-					<td id="diskSpace" class="data">0.0 GB</td>
-				</tr>
-				<tr>
-					<td>Auto Record</td>
-					<td id="autoRecord" class="data">null</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td></td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
+	<style>
+		body {
+			font-size: 14px;
+			letter-spacing: .08em;
+		}
+
+		.table {
+			width: 100%;
+			height: 100%;
+		}
+
+		.data {
+			text-align: right;
+			font-weight: 300;
+			width: 50%;
+		}
+	</style>
+	<table class="table">
+		<tbody>
+			<tr>
+				<td><b>CPU Usage</b></td>
+				<td id="cpuUsage" class="data">0.0%</td>
+			</tr>
+			<tr>
+				<td><b>Frames Per Second</b></td>
+				<td id="fps" class="data">0.0 FPS</td>
+			</tr>
+			<tr>
+				<td><b>Bitrate</b></td>
+				<td id="bitrate" class="data">0 kb/s</td>
+			</tr>
+			<tr>
+				<td><b>Frame Time</b></td>
+				<td id="frameTime" class="data">0.0 ms</td>
+			</tr>
+			<tr>
+				<td><b>Missed Frames</b></td>
+				<td id="rendering" class="data">0 / 0 (0.0%)</td>
+			</tr>
+			<tr>
+				<td><b>Skipped Frames</b></td>
+				<td id="encoding" class="data">0 / 0 (0.0%)</td>
+			</tr>
+			<tr>
+				<td><b>Dropped Frames</b></td>
+				<td id="network" class="data">0 / 0 (0.0%)</td>
+			</tr>
+			<tr>
+				<td><b>Uptime</b></td>
+				<td id="uptime" class="data">00:00:00</td>
+			</tr>
+			<tr>
+				<td><b>Disk Space</b></td>
+				<td id="diskSpace" class="data">0.0 GB</td>
+			</tr>
+			<tr>
+				<td><b>Auto Record</b></td>
+				<td id="autoRecord" class="data">null</td>
+			</tr>
+		</tbody>
+	</table>
+	<script>
+		const stats = nodecg.Replicant('stats');
+		const autoRecord = nodecg.Replicant('autoRecord');
+
+		window.onload = () => {
+			NodeCG.waitForReplicants(stats, autoRecord).then(() => {
+				stats.on('change', (newVal) => {
+					document.getElementById("cpuUsage").innerHTML = newVal.cpuUsage.toFixed(1) + '%';
+					document.getElementById("fps").innerHTML = newVal.fps.toFixed(1) + ' FPS';
+					document.getElementById("bitrate").innerHTML = newVal.kbitsPerSec + ' kb/s';
+					document.getElementById("frameTime").innerHTML = newVal.averageFrameTime.toFixed(1) + ' ms';
+					document.getElementById("rendering").innerHTML = `${newVal.renderMissedFrames} / ${newVal.renderTotalFrames} (${((newVal.renderMissedFrames / newVal.renderTotalFrames) * 100).toFixed(1)}%)`
+					document.getElementById("encoding").innerHTML = `${newVal.outputSkippedFrames} / ${newVal.outputTotalFrames} (${((newVal.outputSkippedFrames / newVal.outputTotalFrames) * 100).toFixed(1)}%)`
+					document.getElementById("network").innerHTML = `${newVal.numDroppedFrames} / ${newVal.numTotalFrames} (${((newVal.numDroppedFrames / newVal.numTotalFrames) * 100).toFixed(1)}%)`
+					document.getElementById("uptime").innerHTML = new Date(newVal.totalStreamTime * 1000).toISOString().substr(11, 8)
+					document.getElementById("diskSpace").innerHTML = (newVal.freeDiskSpace / 1000).toFixed(1) + ' GB';
+				});
+
+				autoRecord.on('change', (newVal) => {
+					switch (newVal.active) {
+						case true: document.getElementById("autoRecord").innerHTML = 'Active'; break;
+						case false: document.getElementById("autoRecord").innerHTML = 'Inactive'; break;
+					}
+				})
+			});
+		}
+	</script>
 </body>
 
 </html>

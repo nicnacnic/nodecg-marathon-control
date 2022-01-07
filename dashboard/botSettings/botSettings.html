@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
+    <script src="../nodecgComponents/nodecgComponents.js"></script>
+</head>
+
+<body>
+    <style>
+        body {
+            margin-bottom: 0;
+        }
+
+        #botActive {
+            margin-bottom: 15px;
+        }
+
+        .select {
+            margin-bottom: 15px;
+        }
+    </style>
+    <button id="botActive" onClick="botSettings.value.active = !botSettings.value.active"></button>
+    <div class="select">
+        <select id="channel" onchange="botSettings.value.channel = this.value;">
+        </select>
+        <label>Channel</label>
+        <div class="selectBorder"></div>
+    </div>
+    <div class="select">
+        <select id="device" onchange="botSettings.value.outputDevice = this.value;">
+        </select>
+        <label>Device</label>
+        <div class="selectBorder"></div>
+    </div>
+    <div class="select">
+        <select id="source" onchange="botSettings.value.source = this.value;">
+        </select>
+        <label>OBS Source</label>
+        <div class="selectBorder"></div>
+    </div>
+    <script>
+        const botSettings = nodecg.Replicant('botSettings')
+        const audioSources = nodecg.Replicant('audioSources')
+
+        window.onload = () => {
+            NodeCG.waitForReplicants(botSettings, audioSources).then(() => {
+                botSettings.on('change', (newVal, oldVal) => {
+                    if (oldVal === undefined) {
+                        switch (newVal.active) {
+                            case true: document.getElementById('botActive').innerHTML = 'Turn Off Bot'; document.getElementById("botActive").style.backgroundColor = '#990000'; toggleDisabled(false); break;
+                            case false: document.getElementById('botActive').innerHTML = 'Turn On Bot'; document.getElementById("botActive").style.backgroundColor = '#272727'; toggleDisabled(true); break;
+                        }
+                    }
+                    else if (newVal.active !== oldVal.active) {
+                        switch (newVal.active) {
+                            case true: document.getElementById('botActive').innerHTML = 'Turn Off Bot'; document.getElementById("botActive").style.backgroundColor = '#990000'; nodecg.getDialog('notice').open(); toggleDisabled(false); break;
+                            case false: document.getElementById('botActive').innerHTML = 'Turn On Bot'; document.getElementById("botActive").style.backgroundColor = '#272727'; nodecg.getDialog('notice').open(); toggleDisabled(true); break;
+                        }
+                    }
+                    if (oldVal === undefined || Object.keys(newVal.channels).length !== Object.keys(oldVal.channels).length) updateChannels(newVal)
+                    else if (newVal.channel !== oldVal.channel) document.getElementById('channel').value = newVal.channel;
+                    if (oldVal === undefined || Object.keys(newVal.devices).length !== Object.keys(oldVal.devices).length) updateDevices(newVal)
+                    else if (newVal.outputDevice !== oldVal.outputDevice) document.getElementById('device').value = newVal.outputDevice;
+                })
+
+                audioSources.on('change', (newVal) => updateSources(newVal))
+            })
+        }
+
+        function updateChannels(newVal) {
+            let channelList = document.getElementById('channel');
+            let sortedChannels = [];
+            for (let channel in newVal.channels) { sortedChannels.push([channel, newVal.channels[channel]]) }
+            sortedChannels.sort((a, b) => { return a[0] - b[0]; });
+            channelList.innerHTML = '';
+            sortedChannels.forEach(channel => channelList.innerHTML = channelList.innerHTML + `<option value=${channel[0]}>${channel[1]}</option>`);
+            channelList.value = newVal.channel;
+        }
+
+        function updateDevices(newVal) {
+            let deviceList = document.getElementById('device');
+            let sortedDevices = [];
+            for (let device in newVal.devices) { sortedDevices.push([device, newVal.devices[device]]) }
+            sortedDevices.sort((a, b) => { return a[1] - b[1]; });
+            deviceList.innerHTML = `<option value=-1>Default</option>`;
+            sortedDevices.forEach(device => deviceList.innerHTML = deviceList.innerHTML + `<option value=${device[0]}>${device[1]}</option>`);
+            deviceList.value = newVal.outputDevice;
+        }
+
+        function updateSources(newVal) {
+            const sourceTypes = ['wasapi_input_capture', 'wasapi_output_capture', 'pulse_input_capture', 'pulse_output_capture']
+            let sourceList = document.getElementById('source');
+            let sortedDevices = [];
+            newVal.forEach(source => {
+                if (sourceTypes.includes(source.type))
+                    sourceList.innerHTML = sourceList.innerHTML + `<option>${source.name}</option>`;
+            })
+            sourceList.value = botSettings.value.outputSource;
+        }
+
+        function toggleDisabled(value) {
+            document.getElementById('channel').disabled = value;
+            document.getElementById('device').disabled = value;
+            document.getElementById('source').disabled = value;
+        }
+    </script>
+</body>
+
+</html>

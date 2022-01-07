@@ -32,10 +32,10 @@ module.exports.activeRunners = [
 ];
 
 module.exports.streamSync = {
-    active: false,
-    maxOffset: 500,
     syncing: false,
-    forceSync: false,
+    startSync: false,
+    autoSync: false,
+    maxOffset: 500,
     delay: [null, null, null, null, null]
 }
 
@@ -44,9 +44,24 @@ module.exports.autoRecord = {
     filenameFormatting: '%CCYY-%MM-%DD %hh-%mm-%ss',
 }
 
+module.exports.botData = {
+    connected: false,
+    users: {},
+}
+
+module.exports.botSettings = {
+    active: false,
+    channel: null,
+    outputDevice: -1,
+    outputSource: null,
+    channels: {},
+    devices: {}
+}
+
 module.exports.settings = {
     previewCode: '',
     programCode: '',
+    inIntermission: false,
     inTransition: false,
     emergencyTransition: false,
     streaming: false,

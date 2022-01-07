@@ -1,9 +1,17 @@
 const OBSWebSocket = require('obs-websocket-js');
+const path = require('path')
 const defaultValue = require('./defaultValues');
+const DACBot = require('./bot');
 
 module.exports = function (nodecg) {
+    const router = nodecg.Router();
     const obs = new OBSWebSocket();
+    let lastRun = +new Date();
     let connectionError = false;
+
+    // Allow runners to access delay graphic.
+    router.get('/bundles/nodecg-marathon-control/delay', (req, res) => res.sendFile(path.join(__dirname , '../graphics/delay/delay.html')));
+    nodecg.mount('/', router);
 
     // Initialize replicants.
     const activeRunners = nodecg.Replicant('activeRunners', { defaultValue: defaultValue.activeRunners }); // Active runner data.
@@ -14,7 +22,10 @@ module.exports = function (nodecg) {
     const settings = nodecg.Replicant('settings', { defaultValue: defaultValue.settings }) // All dashboard settings.
     const streamSync = nodecg.Replicant('streamSync', { defaultValue: defaultValue.streamSync }) // Stream Sync data.
     const autoRecord = nodecg.Replicant('autoRecord', { defaultValue: defaultValue.autoRecord }) // Auto Record settings
+    const botSettings = nodecg.Replicant('botSettings', { defaultValue: defaultValue.botSettings }) // Bot settings.
+    const botData = nodecg.Replicant('botData', { defaultValue: defaultValue.botData }) // Bot settings.
     const runDataActiveRun = nodecg.Replicant('runDataActiveRun', 'nodecg-speedcontrol') // Active run data from nodecg-speedcontrol.
+    const timer = nodecg.Replicant('timer', 'nodecg-speedcontrol') // Timer from nodecg-speedcontrol.
 
     obs.connect({ address: nodecg.bundleConfig.address, password: nodecg.bundleConfig.password }).then(async () => {
         nodecg.log.info('Connected to OBS instance!')
@@ -25,19 +36,26 @@ module.exports = function (nodecg) {
         // Get OBS data.
         obs.send('GetStreamingStatus').then(result => { settings.value.streaming = result.streaming; settings.value.recording = result.recording })
         obs.send('GetStudioModeStatus').then(result => { if (!result.studioMode) obs.send('EnableStudioMode').catch((error) => websocketError(error)) });
-        obs.send('GetPreviewScene').then(result => currentScene.value.preview = result.name).catch((error) => websocketError(error));
-        obs.send('GetSceneList').then(result => {
-            currentScene.value.program = result.currentScene;
-            result.scenes.forEach(scene => {
-                sceneList.value.push(scene.name);
-            })
-        });
+        obs.send('GetPreviewScene').then(result => updateCurrentScene(result.name)).catch((error) => websocketError(error));
+
+        // Start DACBot.
+        if (botSettings.value.active) {
+            switch (nodecg.bundleConfig.botToken) {
+                case '': nodecg.log.warn('No bot token has been provided!'); break;
+                default: DACBot.start(nodecg); break;
+            }
+        }
 
         // Get audio sources.
         getAudioSources();
 
-        // Get stream latency.
-        setInterval(() => nodecg.sendMessage('getStreamLatency'), 2000)
+        // Get scene list.
+        getScenes()
+
+        // Auto Stream Sync™
+        setInterval(() => {
+            if (streamSync.value.autoSync && (timer.value.state === 'running' || timer.value.state === 'paused')) getDelay()
+        }, 120000)
 
         // Listening for OBS events.
         obs.on('error', (error) => websocketError(error));
@@ -48,10 +66,10 @@ module.exports = function (nodecg) {
         obs.on('RecordingStarted', () => settings.value.recording = true)
         obs.on('RecordingStopped', () => settings.value.recording = false)
         obs.on('TransitionBegin', () => settings.value.inTransition = true)
-        obs.on('TransitionEnd', (data) => toggleAutoRecord(data))
+        obs.on('TransitionEnd', (data) => updateCurrentScene(data.toScene))
         obs.on('SourceCreated', () => getAudioSources())
         obs.on('SourceDestroyed', () => getAudioSources())
-        obs.on('ScenesChanged', (data) => sceneList.value = data.scenes)
+        obs.on('ScenesChanged', (data) => getScenesLimiter());
         obs.on('SwitchScenes', (data) => currentScene.value.program = data.sceneName)
         obs.on('PreviewSceneChanged', (data) => currentScene.value.preview = data.sceneName)
         obs.on('SourceVolumeChanged', (data) => audioSources.value.find(element => element.name === data.sourceName).volume = data.volumeDb.toFixed(1))
@@ -98,15 +116,49 @@ module.exports = function (nodecg) {
             }
         })
 
-        // Stream Sync™ 
+        // Auto record logic.
+        settings.on('change', (newVal, oldVal) => {
+            if (autoRecord.value.active && (oldVal === undefined || newVal.inIntermission !== oldVal.inIntermission)) {
+                if (!newVal.inIntermission && !settings.value.recording) {
+                    settings.value.emergencyTransition = false;
+                    obs.send('StartRecording').catch((error) => websocketError(error));
+                }
+                else if (!newVal.inIntermission) settings.value.emergencyTransition = false;
+                else if (newVal.inIntermission && settings.value.recording && !settings.value.emergencyTransition) obs.send('StopRecording').catch((error) => websocketError(error));
+            }
+        })
+
         streamSync.on('change', (newVal) => {
+            if (!newVal.syncing && newVal.startSync) getDelay(newVal);
+        })
+
+        // Get stream delay.
+        function getDelay(newVal) {
+            streamSync.value.syncing = true;
+            streamSync.value.startSync = false;
+            if (!newVal.autoSync) nodecg.log.info('Stream sync requested on ' + Date() + '.')
+            let returnValue = [false, false, false, false];
+            let time = Date.now()
+            nodecg.sendMessage('flashSquare');
+            nodecg.sendMessage('getDelay', time);
+            for (let i = 0; i < 4; i++) {
+                if (activeRunners.value[i].streamKey === '') returnValue[i] = true;
+            }
+            nodecg.listenFor('returnDelay', (index) => returnValue[index] = true);
+            const waitForReturn = setInterval(() => {
+                if (returnValue.every(value => value === true)) {
+                    syncStreams(streamSync.value)
+                    clearInterval(waitForReturn);
+                }
+            }, 250)
+        }
+
+        // Stream Sync™
+        function syncStreams(newVal) {
             let filteredArray = newVal.delay.filter(e => e)
             let biggestDelay = Math.max(...filteredArray)
             let smallestDelay = Math.min(...filteredArray)
-            if (newVal.forceSync || (newVal.active && (biggestDelay - smallestDelay) > newVal.maxOffset) && !newVal.syncing && filteredArray.length > 1) {
-                nodecg.log.info('Stream sync requested on ' + Date() + '.')
-                streamSync.value.syncing = true;
-                streamSync.value.forceSync = false;
+            if (newVal.startSync || (newVal.autoSync && (biggestDelay - smallestDelay) > newVal.maxOffset) && !newVal.syncing && filteredArray.length > 1) {
                 let syncArray = [];
                 newVal.delay.forEach(delay => {
                     switch (delay) {
@@ -114,10 +166,32 @@ module.exports = function (nodecg) {
                         default: syncArray.push(biggestDelay - delay); break;
                     }
                 })
-                nodecg.sendMessage('syncStreams', (syncArray))
+                nodecg.sendMessage('syncStreams', syncArray)
                 setTimeout(() => streamSync.value.syncing = false, Math.max(...syncArray));
             }
-        })
+            else
+                streamSync.value.syncing = false;
+        }
+
+        // Fetch scene list.
+        function getScenes() {
+            sceneList.value = [];
+            obs.send('GetSceneList').then(result => {
+                currentScene.value.program = result.currentScene;
+                result.scenes.forEach(scene => {
+                    sceneList.value.push(scene.name);
+                })
+            });
+        }
+
+        // Fetch scene list limiter (because of a bug in OBS Websocket JS)
+        function getScenesLimiter() {
+            const now = +new Date();
+            if (now - lastRun > 500) {
+                lastRun = now;
+                getScenes()
+            }
+        }
 
         // Set filename formatting.
         function setFilenameFormatting(filename) {
@@ -159,44 +233,37 @@ module.exports = function (nodecg) {
                 result.sources.forEach(source => {
                     if (defaultValue.audioSourceTypes.includes(source.typeId)) {
                         obs.send('GetAudioActive', { sourceName: source.name }).then(result => {
-                            if (result.audioActive && source.typeId === 'browser_source') {
+                            if (source.typeId === 'browser_source') {
                                 obs.send('GetSourceSettings', { sourceName: source.name }).then((data) => {
                                     switch (true) {
-                                        case (data.sourceSettings.url.includes('streamPlayer1')): activeRunners.value[0].source = source.name; break;
-                                        case (data.sourceSettings.url.includes('streamPlayer2')): activeRunners.value[1].source = source.name; break;
-                                        case (data.sourceSettings.url.includes('streamPlayer3')): activeRunners.value[2].source = source.name; break;
-                                        case (data.sourceSettings.url.includes('streamPlayer4')): activeRunners.value[3].source = source.name; break;
+                                        case (data.sourceSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer1.html')): activeRunners.value[0].source = source.name; break;
+                                        case (data.sourceSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer2.html')): activeRunners.value[1].source = source.name; break;
+                                        case (data.sourceSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer3.html')): activeRunners.value[2].source = source.name; break;
+                                        case (data.sourceSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer4.html')): activeRunners.value[3].source = source.name; break;
                                     }
-                                    getAudioSourceData(source.name)
                                 }).catch((error) => websocketError(error));
                             }
-                            else if (result.audioActive)
-                                getAudioSourceData(source.name)
+                            getAudioSourceData(source.name, source.typeId)
                         }).catch((error) => websocketError(error));
                     }
                 })
             }).catch((error) => websocketError(error));
         }
 
-        function getAudioSourceData(source) {
+        function getAudioSourceData(source, type) {
             obs.send('GetVolume', { source: source, useDecibel: true }).then(result => {
                 obs.send('GetSyncOffset', { source: source }).then(data => {
-                    audioSources.value.push({ name: source, volume: result.volume.toFixed(1), muted: result.muted, offset: data.offset })
+                    audioSources.value.push({ name: source, type: type, volume: result.volume.toFixed(1), muted: result.muted, offset: data.offset })
                 }).catch((error) => websocketError(error));
             }).catch((error) => websocketError(error));
         }
 
-        // Auto-Record logic.
-        function toggleAutoRecord(data) {
+        function updateCurrentScene(scene) {
+            currentScene.value.program = scene;
             settings.value.inTransition = false;
-            currentScene.value.program = data.toScene;
-            if (autoRecord.value.active) {
-                if (data.toScene !== settings.value.intermissionScene && !settings.value.recording) {
-                    settings.value.emergencyTransition = false;
-                    obs.send('StartRecording').catch((error) => websocketError(error));
-                }
-                else if (data.toScene !== settings.value.intermissionScene) settings.value.emergencyTransition = false;
-                else if (data.toScene === settings.value.intermissionScene && settings.value.recording && !settings.value.emergencyTransition) obs.send('StopRecording').catch((error) => websocketError(error));
+            switch (scene) {
+                case settings.value.intermissionScene: settings.value.inIntermission = true; break;
+                default: settings.value.inIntermission = false; break;
             }
         }
 
