@@ -33,13 +33,7 @@
         <label>Filename Formatting</label>
         <div class="inputBorder"></div>
     </div>
-    <div class="select">
-        <select id="intermissionScene" onChange="settings.value.intermissionScene = this.value">
-        </select>
-        <label>Intermission Scene</label>
-        <div class="selectBorder"></div>
-    </div>
-    <button id="toggleTable" onClick="toggleTable()">Toggle Variables</button>
+    <button id="toggleTable" onClick="toggleTable()">Show Variables</button>
     <table id="variableTable">
         <tbody>
             <tr>
@@ -190,11 +184,9 @@
     </table>
     <script>
         const autoRecord = nodecg.Replicant('autoRecord');
-        const sceneList = nodecg.Replicant('sceneList');
-        const settings = nodecg.Replicant('settings');
 
         window.onload = () => {
-            NodeCG.waitForReplicants(autoRecord, sceneList, settings).then(() => {
+            NodeCG.waitForReplicants(autoRecord).then(() => {
 
                 autoRecord.on('change', (newVal) => {
                     switch (newVal.active) {
@@ -203,28 +195,13 @@
                     }
                     document.getElementById('filenameFormatting').value = newVal.filenameFormatting;
                 })
-
-                sceneList.on('change', (newVal) => {
-                    document.getElementById("intermissionScene").innerHTML = '';
-                    for (let i = 0; i < newVal.length; i++) {
-                        let option = document.createElement("option");
-                        option.innerHTML = newVal[i];
-                        switch (newVal[i]) {
-                            case settings.value.intermissionScene: document.getElementById("intermissionScene").setAttribute('selected', i); break;
-                            default: document.getElementById("intermissionScene").setAttribute('selected', 0); break;
-                        }
-                        document.getElementById("intermissionScene").appendChild(option);
-                    }
-                });
-
-                settings.on('change', (newVal) => document.getElementById('intermissionScene').value = newVal.intermissionScene)
             })
         };
 
         function toggleTable() {
             switch (window.getComputedStyle(document.getElementById('variableTable')).getPropertyValue('display')) {
-                case 'none': document.getElementById('variableTable').style.display = 'table'; break;
-                case 'table': document.getElementById('variableTable').style.display = 'none'; break;
+                case 'none': document.getElementById('variableTable').style.display = 'table'; document.getElementById('toggleTable').innerHTML = 'Hide Variables'; break;
+                case 'table': document.getElementById('variableTable').style.display = 'none'; document.getElementById('toggleTable').innerHTML = 'Show Variables'; break;
             }
         }
     </script>

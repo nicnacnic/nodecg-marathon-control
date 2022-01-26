@@ -4,7 +4,7 @@ const audioSources = nodecg.Replicant('audioSources');
 const botSettings = nodecg.Replicant('botSettings');
 const sliderChange = new Event('input');
 
-window.onLoad = () => {
+window.onload = () => {
 
 	NodeCG.waitForReplicants(audioSources, streamSync, botSettings).then(() => {
 

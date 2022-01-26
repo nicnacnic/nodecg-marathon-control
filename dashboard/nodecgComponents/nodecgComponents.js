@@ -1,4 +1,4 @@
-window.onload = () => {
+window.addEventListener('load', () => {
     const buttons = document.querySelectorAll('button');
     for (let button of buttons) {
         if (!button.hasAttribute('noRipple')) button.addEventListener('click', createRipple)
@@ -8,7 +8,10 @@ window.onload = () => {
     for (let input of inputs) {
         input.setAttribute('placeholder', ' ');
         input.setAttribute('autocomplete', 'off')
-        if (input.type === 'range') input.addEventListener('input', updateSlider); input.style.setProperty('--slider-value', `${(input.value - input.min) / (input.max - input.min) * 100}%`);
+        if (input.type === 'range') {
+            input.addEventListener('input', updateSlider);
+            input.style.setProperty('--slider-value', `${(input.value - input.min) / (input.max - input.min) * 100}%`);
+        }
     }
 
     const selects = document.querySelectorAll('select');
@@ -16,7 +19,7 @@ window.onload = () => {
         select.setAttribute('placeholder', ' ');
         select.setAttribute('autocomplete', 'off')
     }
-}
+})
 
 function createRipple(event) {
     const button = event.currentTarget;

@@ -16,20 +16,34 @@
         #toggleStream {
             margin: 0;
         }
+
+        .select {
+            margin-top: 15px;
+        }
     </style>
     <button id="toggleStream" onClick="toggleStream(this)"></button>
     <button id="toggleRecording" onClick="toggleRecording(this)"></button>
     <button id="autoRunner" onClick="settings.value.autoSetRunners = !settings.value.autoSetRunners"></button>
     <button id="autoLayout" onClick="settings.value.autoSetLayout = !settings.value.autoSetLayout"></button>
+    <button id="forceChecklist" onClick="settings.value.forceChecklist = !settings.value.forceChecklist"
+        title="If enabled, the checklist must be complete to unlock the transition button."></button>
     <button id="selectPreviewWindow" onClick="setPreviewWindow()">Select Preview Window</button>
     <button id="selectProgramWindow" onClick="setProgramWindow()">Select Program Window</button>
     <button id="reauthenticate" onClick="nodecg.sendMessage('reauthenticate')">Reauthenticate</button>
     <button id="showWelcome" nodecg-dialog="welcome">Show Welcome Screen</button>
+    <div class="select">
+        <select id="intermissionScene" onChange="settings.value.intermissionScene = this.value">
+        </select>
+        <label>Intermission Scene</label>
+        <div class="selectBorder"></div>
+    </div>
     <script>
         const settings = nodecg.Replicant('settings');
+        const sceneList = nodecg.Replicant('sceneList')
 
-        window.addEventListener('load', function () {
-            NodeCG.waitForReplicants(settings).then(() => {
+        window.onload = () => {
+
+            NodeCG.waitForReplicants(settings, sceneList).then(() => {
 
                 // Update preview/program URL.
                 settings.on('change', (newVal) => {
@@ -49,12 +63,30 @@
                         case true: document.getElementById('autoLayout').innerHTML = 'Turn Off Auto Layout'; document.getElementById("autoLayout").style.backgroundColor = '#990000'; break;
                         case false: document.getElementById('autoLayout').innerHTML = 'Turn On Auto Layout'; document.getElementById("autoLayout").style.backgroundColor = '#272727'; break;
                     }
+                    switch (newVal.forceChecklist) {
+                        case true: document.getElementById('forceChecklist').innerHTML = `Don't Enforce Checklist`; document.getElementById("forceChecklist").style.backgroundColor = '#990000'; break;
+                        case false: document.getElementById('forceChecklist').innerHTML = 'Enforce Checklist'; document.getElementById("forceChecklist").style.backgroundColor = '#272727'; break;
+                    }
                     document.getElementById('toggleStream').removeAttribute('disabled');
                     document.getElementById('toggleRecording').removeAttribute('disabled');
+                    document.getElementById('intermissionScene').value = newVal.intermissionScene;
 
                 });
+
+                sceneList.on('change', (newVal) => {
+                    document.getElementById("intermissionScene").innerHTML = '';
+                    for (let i = 0; i < newVal.length; i++) {
+                        let option = document.createElement("option");
+                        option.innerHTML = newVal[i];
+                        switch (newVal[i]) {
+                            case settings.value.intermissionScene: document.getElementById("intermissionScene").setAttribute('selected', i); break;
+                            default: document.getElementById("intermissionScene").setAttribute('selected', 0); break;
+                        }
+                        document.getElementById("intermissionScene").appendChild(option);
+                    }
+                });
             });
-        });
+        }
 
         function toggleStream(element) {
             nodecg.sendMessage('toggleStream')

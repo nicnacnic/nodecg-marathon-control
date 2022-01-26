@@ -2,10 +2,11 @@ const settings = nodecg.Replicant('settings')
 const firstLaunch = nodecg.Replicant('firstLaunch')
 const currentLayout = nodecg.Replicant('currentLayout')
 const previewProgram = nodecg.Replicant('previewProgram')
+const checklist = nodecg.Replicant('checklist')
 const twitchCommercialTimer = nodecg.Replicant('twitchCommercialTimer', 'nodecg-speedcontrol')
 
 window.onload = () => {
-    NodeCG.waitForReplicants(settings, firstLaunch, currentLayout, previewProgram).then(() => {
+    NodeCG.waitForReplicants(settings, firstLaunch, currentLayout, previewProgram, checklist, twitchCommercialTimer).then(() => {
 
         // Open welcome dialog on first launch.
         if (settings.value.firstLaunch) {
@@ -33,21 +34,28 @@ window.onload = () => {
                 case true: document.getElementById('recording').style.color = 'red'; break;
                 case false: document.getElementById('recording').style.color = 'white'; break;
             }
-            switch (newVal.inTransition) {
-                case true: document.getElementById("transition").setAttribute("disabled", "true"); break;
-                case false: document.getElementById("transition").removeAttribute("disabled"); break;
-            }
             switch (newVal.emergencyTransition) {
                 case true: document.getElementById("emergency").setAttribute("disabled", "true"); break;
                 case false: document.getElementById("emergency").removeAttribute("disabled"); break;
             }
+            if (!newVal.forceChecklist || checklist.value.completed || !checklist.value.started) {
+                switch (newVal.inTransition) {
+                    case true: document.getElementById("transition").setAttribute("disabled", "true"); break;
+                    case false: document.getElementById("transition").removeAttribute("disabled"); break;
+                }
+            }
         })
 
-        // Disable transition button if commercial is running.
-        twitchCommercialTimer.on('change', (newVal) => {
-            switch (newVal.secondsRemaining) {
-                case 0: document.getElementById("transition").removeAttribute("disabled"); break;
-                default: document.getElementById("transition").setAttribute("disabled", "true"); break;
+        checklist.on('change', (newVal) => {
+            if (settings.value.forceChecklist) {
+                if (settings.value.inIntermission && newVal.started && !newVal.completed) {
+                    document.getElementById("transition").setAttribute("disabled", "true")
+                    document.getElementById("transition").setAttribute('title', "Please complete the checklist to unlock this button.");
+                }
+                else if (settings.value.inIntermission && newVal.completed) {
+                    document.getElementById("transition").removeAttribute("disabled")
+                    document.getElementById("transition").removeAttribute('title');
+                }
             }
         })
     });

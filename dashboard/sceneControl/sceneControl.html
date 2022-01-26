@@ -10,7 +10,6 @@
 </head>
 
 <body>
-    <div id="main">
         <div id="sceneDiv">
             <div class="select">
                 <select id="sceneList" onchange="currentScene.value.preview = this.value;">
@@ -26,7 +25,7 @@
                     <label>Player 1</label>
                     <div></div>
                 </div>
-                <button class="iconButton" id="p1Refresh" onclick="nodecg.sendMessage('restartMedia', { source: activeRunners.value[0].source, index: 0})"><span id="refreshIcon"
+                <button class="iconButton" id="p1Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[0].source)"><span id="refreshIcon"
                         class="material-icons">refresh</span></button>
                 <button class="iconButton" id="p1Cam" onclick="activeRunners.value[0].cam = !activeRunners.value[0].cam;"><span id="camIcon"
                         class="material-icons">videocam_off</span></button>
@@ -37,7 +36,7 @@
                     <label>Player 2</label>
                     <div></div>
                 </div>
-                <button class="iconButton" id="p2Refresh" onclick="nodecg.sendMessage('restartMedia', { source: activeRunners.value[1].source, index: 1})"><span id="refreshIcon"
+                <button class="iconButton" id="p2Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[1].source)"><span id="refreshIcon"
                         class="material-icons">refresh</span></button>
                 <button class="iconButton" id="p2Cam" onclick="activeRunners.value[1].cam = !activeRunners.value[1].cam;"><span id="camIcon"
                         class="material-icons">videocam_off</span></button>
@@ -48,7 +47,7 @@
                     <label>Player 3</label>
                     <div></div>
                 </div>
-                <button class="iconButton" id="p3Refresh" onclick="nodecg.sendMessage('restartMedia', { source: activeRunners.value[2].source, index: 2})"><span id="refreshIcon"
+                <button class="iconButton" id="p3Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[2].source)"><span id="refreshIcon"
                         class="material-icons">refresh</span></button>
                 <button class="iconButton" id="p3Cam" onclick="activeRunners.value[2].cam = !activeRunners.value[2].cam;"><span id="camIcon"
                         class="material-icons">videocam_off</span></button>
@@ -59,13 +58,13 @@
                     <label>Player 4</label>
                     <div></div>
                 </div>
-                <button class="iconButton" id="p4Refresh" onclick="nodecg.sendMessage('restartMedia', { source: activeRunners.value[3].source, index: 3})"><span id="refreshIcon"
+                <button class="iconButton" id="p4Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[3].source)"><span id="refreshIcon"
                         class="material-icons">refresh</span></button>
                 <button class="iconButton" id="p4Cam" onclick="activeRunners.value[3].cam = !activeRunners.value[3].cam;"><span id="camIcon"
                         class="material-icons">videocam_off</span></button>
             </div>
         </div>
-    </div>
+        <button id="adPlayer" onClick="adPlayer.value.adPlaying = true;"></button>
 </body>
 
 </html>

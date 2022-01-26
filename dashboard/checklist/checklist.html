@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
+    <script src="../nodecgComponents/nodecgComponents.js"></script>
+</head>
+
+<body>
+    <style>
+        #buttonDiv {
+            display: flex;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        #buttonDiv button {
+            width: 48%;
+        }
+        #override {
+            margin-right: 15px;
+        }
+        .checkbox {
+            width: 100%;
+            display: flex;
+            margin: 5px 0;
+        }
+
+        .checkbox span {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 5px;
+        }
+
+        #statusText {
+            margin-top: 10px;
+        }
+    </style>
+    <div id="buttonDiv">
+        <button id="override" onclick="override()">Override</button>
+        <button id="reset" onClick="reset()">Reset</button>
+    </div>
+    <div class="checkbox">
+        <input type="checkbox" id="playRun" title="This checkbox is managed by the system." disabled></input>
+        <span>Play the next run</span>
+    </div>
+    <div class="checkbox">
+        <input type="checkbox" id="playAd" title="This checkbox is managed by the system." disabled></input>
+        <span>Play an ad</span>
+    </div>
+    <div class="checkbox">
+        <input type="checkbox" id="verifyStream" onClick="checklist.value.verifyStream = this.checked"></input>
+        <span>Verify the stream key and layout</span>
+    </div>
+    <div class="checkbox">
+        <input type="checkbox" id="syncStreams" title="This checkbox is managed by the system." disabled></input>
+        <span>Sync the streams</span>
+    </div>
+    <div class="checkbox">
+        <input type="checkbox" id="checkAudio" onClick="checklist.value.checkAudio = this.checked"></input>
+        <span>Adjust audio levels</span>
+    </div>
+    <div class="checkbox">
+        <input type="checkbox" id="checkInfo" onClick="checklist.value.checkInfo = this.checked"></input>
+        <span>Verify run information</span>
+    </div>
+    <div class="checkbox">
+        <input type="checkbox" id="finalCheck" onClick="checklist.value.finalCheck = this.checked"></input>
+        <span>Make sure everything looks good</span>
+    </div>
+    <div class="checkbox">
+        <input type="checkbox" id="checkReady" onClick="checklist.value.checkReady = this.checked"></input>
+        <span>Ask everyone if they're ready</span>
+    </div>
+    <div id="statusText"></div>
+    <script>
+        const checklist = nodecg.Replicant('checklist');
+        const adPlayer = nodecg.Replicant('adPlayer');
+
+        NodeCG.waitForReplicants(checklist, adPlayer).then(() => {
+
+            checklist.on('change', (newVal) => {
+                switch (newVal.playRun) {
+                    case true: document.getElementById('playRun').checked = true; break;
+                    case false: document.getElementById('playRun').checked = false; break;
+                }
+                switch (newVal.playAd) {
+                    case true: document.getElementById('playAd').checked = true; break;
+                    case false: document.getElementById('playAd').checked = false; break;
+                }
+                switch (newVal.verifyStream) {
+                    case true: document.getElementById('verifyStream').checked = true; break;
+                    case false: document.getElementById('verifyStream').checked = false; break;
+                }
+                switch (newVal.syncStreams) {
+                    case true: document.getElementById('syncStreams').checked = true; break;
+                    case false: document.getElementById('syncStreams').checked = false; break;
+                }
+                switch (newVal.checkAudio) {
+                    case true: document.getElementById('checkAudio').checked = true; break;
+                    case false: document.getElementById('checkAudio').checked = false; break;
+                }
+                switch (newVal.checkInfo) {
+                    case true: document.getElementById('checkInfo').checked = true; break;
+                    case false: document.getElementById('checkInfo').checked = false; break;
+                }
+                switch (newVal.checkReady) {
+                    case true: document.getElementById('checkReady').checked = true; break;
+                    case false: document.getElementById('checkReady').checked = false; break;
+                }
+                switch (newVal.finalCheck) {
+                    case true: document.getElementById('finalCheck').checked = true; break;
+                    case false: document.getElementById('finalCheck').checked = false; break;
+                }
+                switch (newVal.completed) {
+                    case true: document.getElementById('statusText').innerHTML = 'All tasks complete! You may now use the transition button.'; document.getElementById('statusText').style.color = 'lightgreen'; break;
+                    case false: document.getElementById('statusText').innerHTML = 'Complete each item on the checklist to unlock the transition button.'; document.getElementById('statusText').style.color = '#FFFFFF'; break;
+                }
+            })
+        })
+
+        function override() {
+            checklist.value = {
+                started: true,
+                completed: true,
+                playRun: true,
+                playAd: true,
+                verifyStream: true,
+                syncStreams: true,
+                checkAudio: true,
+                checkInfo: true,
+                checkReady: true,
+                finalCheck: true
+            }
+        }
+        function reset() {
+            checklist.value = {
+                started: false,
+                completed: false,
+                playRun: false,
+                playAd: false,
+                verifyStream: false,
+                syncStreams: false,
+                checkAudio: false,
+                checkInfo: false,
+                checkReady: false,
+                finalCheck: false
+            }
+        }
+    </script>
+</body>
+
+</html>

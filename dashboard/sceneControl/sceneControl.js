@@ -3,11 +3,12 @@ const activeRunners = nodecg.Replicant('activeRunners');
 const sceneList = nodecg.Replicant('sceneList');
 const currentScene = nodecg.Replicant('currentScene');
 const settings = nodecg.Replicant('settings');
+const adPlayer = nodecg.Replicant('adPlayer')
 
 window.onload = () => {
 
     // Load replicants.
-    NodeCG.waitForReplicants(activeRunners, sceneList, currentScene, settings).then(() => {
+    NodeCG.waitForReplicants(runDataActiveRun, activeRunners, sceneList, currentScene, settings, adPlayer).then(() => {
 
         // Populates dropdown with uploaded layouts.
         sceneList.on('change', (newVal) => {
@@ -32,6 +33,15 @@ window.onload = () => {
                 }
             }
         });
+
+        adPlayer.on('change', (newVal) => {
+            switch (newVal.adPlaying) {
+                case true: document.getElementById('adPlayer').setAttribute("disabled", "true"); document.getElementById('adPlayer').innerHTML = `Ads Playing (${newVal.secondsLeft}s Remaining)`; break;
+                case false: document.getElementById('adPlayer').removeAttribute("disabled"); document.getElementById('adPlayer').innerHTML = 'Play Ads'; break;
+            }
+        })
+
+        currentScene.on('change', (newVal) => document.getElementById("sceneList").value = newVal.preview)
     });
 }
 

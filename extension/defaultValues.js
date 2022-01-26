@@ -36,7 +36,8 @@ module.exports.streamSync = {
     startSync: false,
     autoSync: false,
     maxOffset: 500,
-    delay: [null, null, null, null, null]
+    error: false,
+    delay: [null, null, null, null]
 }
 
 module.exports.autoRecord = {
@@ -69,6 +70,7 @@ module.exports.settings = {
     intermissionScene: '',
     autoSetLayout: false,
     autoSetRunners: false,
+    forceChecklist: false,
     firstLaunch: true
 };
 
@@ -86,3 +88,26 @@ module.exports.stats = {
     totalStreamTime: 0,
     freeDiskSpace: 0
 };
+
+module.exports.checklist = {
+    started: false,
+    completed: false,
+    playRun: false,
+    playAd: false,
+    verifyStream: false,
+    syncStreams: false,
+    checkAudio: false,
+    checkInfo: false,
+    checkReady: false,
+    finalCheck: false
+}
+
+module.exports.adPlayer = {
+    adPlaying: false,
+    videoAds: false,
+    twitchAds: false,
+    twitchAdLength: 0,
+    secondsLeft: 0,
+    videoScene: null,
+    videoSources: []
+}

@@ -14,7 +14,12 @@
       {
         "name": "camCover",
         "title": "Cam Cover",
-        "allowedTypes": ["jpg", "jpeg", "gif", "png"]
+        "allowedTypes": [
+          "jpg",
+          "jpeg",
+          "gif",
+          "png"
+        ]
       }
     ],
     "dashboardPanels": [
@@ -43,16 +48,16 @@
         "file": "streamSync/streamSync.html"
       },
       {
-        "name": "botControl",
-        "title": "VC Control",
-        "width": 3,
-        "file": "botControl/botControl.html"
-      },
-      {
         "name": "stats",
         "title": "Stats",
         "width": 3,
         "file": "stats/stats.html"
+      },
+      {
+        "name": "checklist",
+        "title": "Checklist",
+        "width": 3,
+        "file": "checklist/checklist.html"
       },
       {
         "name": "obsSettings",
@@ -76,10 +81,10 @@
         "workspace": "Settings"
       },
       {
-        "name": "botSettings",
-        "title": "Bot",
+        "name": "adPlayerSettings",
+        "title": "Ad Player",
         "width": 3,
-        "file": "botSettings/botSettings.html",
+        "file": "adPlayerSettings/adPlayerSettings.html",
         "workspace": "Settings"
       },
       {
@@ -112,8 +117,8 @@
     "graphics": [
       {
         "file": "delay/delay.html",
-        "width": 1920,
-        "height": 1080
+        "width": 1,
+        "height": 1
       },
       {
         "file": "streamPlayer/streamPlayer1.html",
@@ -166,6 +171,7 @@
     "@discordjs/voice": "^0.7.5",
     "audio-mixer": "^2.1.4",
     "discord.js": "^13.3.1",
+    "get-current-line": "^6.6.0",
     "naudiodon": "^2.3.6",
     "obs-websocket-js": "4.0.3",
     "prism-media": "^1.3.2"

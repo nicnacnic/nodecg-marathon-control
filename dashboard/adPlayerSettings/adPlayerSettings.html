@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
+    <script src="../nodecgComponents/nodecgComponents.js"></script>
+</head>
+
+<body>
+    <style>
+        body {
+            margin-top: 0;
+        }
+
+        button {
+            margin-top: 15px;
+        }
+
+        .select {
+            margin-top: 15px;
+        }
+
+        #muteSourcesDiv {
+            width: 100%;
+            height: 100%;
+        }
+
+        #muteSources {
+            padding-top: 26px;
+            color: #FFFFFF;
+            border: none;
+        }
+
+        #bottomText {
+            margin-top: 10px;
+        }
+    </style>
+    <button id="twitchAds" onClick="adPlayer.value.twitchAds = !adPlayer.value.twitchAds"></button>
+    <button id="videoAds" onClick="adPlayer.value.videoAds = !adPlayer.value.videoAds"></button>
+    <button id="refreshVideoSource" onClick="nodecg.sendMessage('getAdSources')">Refresh Video Ad Sources</button>
+    <div class="select">
+        <select id="twitchAdLength" onchange="adPlayer.value.twitchAdLength = this.value;">
+            <option value="30">30s</option>
+            <option value="60">1m</option>
+            <option value="90">1m30s</option>
+            <option value="120">2m</option>
+            <option value="150">2m30s</option>
+            <option value="180">3m</option>
+        </select>
+        <label>Twitch Ad Length</label>
+        <div class="selectBorder"></div>
+    </div>
+    <div class="select">
+        <select id="sceneList" onchange="adPlayer.value.videoScene = this.value;">
+        </select>
+        <label>OBS Scene</label>
+        <div class="selectBorder"></div>
+    </div>
+    <script>
+        const adPlayer = nodecg.Replicant('adPlayer');
+        const sceneList = nodecg.Replicant('sceneList');
+
+        NodeCG.waitForReplicants(adPlayer, sceneList).then(() => {
+            adPlayer.on('change', (newVal, oldVal) => {
+                switch (newVal.videoAds) {
+                    case true: document.getElementById('videoAds').innerHTML = 'Disable Video Ads'; document.getElementById("videoAds").style.backgroundColor = '#990000'; break;
+                    case false: document.getElementById('videoAds').innerHTML = 'Enable Video Ads'; document.getElementById("videoAds").style.backgroundColor = '#272727'; break;
+                }
+                switch (newVal.twitchAds) {
+                    case true: document.getElementById('twitchAds').innerHTML = 'Disable Twitch Ads'; document.getElementById("twitchAds").style.backgroundColor = '#990000'; break;
+                    case false: document.getElementById('twitchAds').innerHTML = 'Enable Twitch Ads'; document.getElementById("twitchAds").style.backgroundColor = '#272727'; break;
+                }
+                document.getElementById('sceneList').value = newVal.videoScene;
+            })
+
+            sceneList.on('change', (newVal) => {
+                let select = document.getElementById("sceneList");
+                select.innerHTML = '';
+                for (let i = 0; i < newVal.length; i++) {
+                    let option = document.createElement("option");
+                    option.innerHTML = newVal[i];
+                    if (newVal[i] === adPlayer.value.videoScene)
+                        option.setAttribute('selected', "")
+                    select.appendChild(option);
+                }
+            });
+        })
+    </script>
+</body>
+
+</html>
