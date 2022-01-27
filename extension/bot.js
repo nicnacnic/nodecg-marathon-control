@@ -1,7 +1,8 @@
-const fs = require('fs')
+const fs = require('fs');
 const path = require("path");
-const portAudio = require('naudiodon')
-const prism = require('prism-media')
+const WebSocket = require('ws');
+const express = require('express')
+const prism = require('prism-media');
 const { Mixer } = require('audio-mixer');
 const { Client, Intents } = require('discord.js');
 const { joinVoiceChannel, EndBehaviorType, createAudioPlayer, createAudioResource, StreamType } = require('@discordjs/voice');
@@ -9,9 +10,11 @@ const { joinVoiceChannel, EndBehaviorType, createAudioPlayer, createAudioResourc
 module.exports.start = (nodecg) => {
 
     let currentMembers = {};
-    let silenceInterval, connection, channel, ao;
+    let silenceInterval, connection, channel;
     const botData = nodecg.Replicant('botData');
+    const botSpeaking = nodecg.Replicant('botSpeaking');
     const botSettings = nodecg.Replicant('botSettings');
+    const settings = nodecg.Replicant('settings')
 
     const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
     const mixer = new Mixer({ channels: 2, bitDepth: 16, ampleRate: 48000 })
@@ -25,13 +28,10 @@ module.exports.start = (nodecg) => {
                 botSettings.value.channels[channel.id] = channel.name
         })
 
-        // Get all audio devices.
-        botSettings.value.devices = {};
-        const audioDevices = portAudio.getDevices();
-        audioDevices.forEach(device => {
-            if (device.maxOutputChannels > 0)
-                botSettings.value.devices[device.id] = device.name;
-        });
+        // Stream audio to browser.
+        const app = nodecg.Router();
+        app.get('/bundles/nodecg-marathon-control/bot-audio', (req, res) => mixer.pipe(res))
+        nodecg.mount(app)
 
         botData.value.users = {};
         nodecg.log.info('Bot has been started!')
@@ -51,16 +51,25 @@ module.exports.start = (nodecg) => {
         })
 
         botSettings.on('change', async (newVal, oldVal) => {
-            if (oldVal === undefined || newVal.outputDevice !== oldVal.outputDevice) outputAudio(newVal.outputDevice)
-            if (oldVal !== undefined && newVal.channel !== oldVal.channel) { 
+            if (oldVal !== undefined && newVal.channel !== oldVal.channel) {
                 botData.value.connected = false;
                 setTimeout(() => botData.value.connected = true, 250)
             }
         })
 
+        settings.on('change', (newVal, oldVal) => {
+            if (oldVal === undefined || newVal.inIntermission !== oldVal.inIntermission) {
+                let guildMember = client.channels.cache.get(botSettings.value.channel).guild.members.cache.get(client.user.id);
+                switch (newVal.inIntermission) {
+                    case true: guildMember.setNickname("Offline"); break;
+                    case false: guildMember.setNickname("🔴 LIVE"); break;
+                }
+            }
+        })
+
         // Join the specified voice channel.
         function joinChannel(value) {
-            if (value === '') return;
+            if (value === '' || value === null) return;
             channel = client.channels.cache.get(value);
             connection = joinVoiceChannel({
                 channelId: channel.id,
@@ -117,20 +126,11 @@ module.exports.start = (nodecg) => {
             }
         })
 
-        // Create audio output.
-        function outputAudio(device) {
-            ao = new portAudio.AudioIO({
-                outOptions: {
-                    channelCount: 2,
-                    sampleFormat: portAudio.SampleFormat16Bit,
-                    sampleRate: 48000,
-                    closeOnError: false,
-                    deviceId: device,
-                }
-            });
-            mixer.pipe(ao)
-            ao.start();
-        }
+        // Detect when user is speaking or not.
+        // connection.receiver.speaking.on("start", (user) => console.log(user));
+        //   connection.receiver.speaking.on("end", (userId) => {
+        //     console.log(  `${userId} end`  );
+        //   });
     });
 
     client.login(nodecg.bundleConfig.botToken);

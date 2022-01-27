@@ -37,7 +37,7 @@ module.exports.streamSync = {
     autoSync: false,
     maxOffset: 500,
     error: false,
-    delay: [null, null, null, null]
+    delay: [null, null, null, null, null]
 }
 
 module.exports.autoRecord = {
@@ -52,11 +52,10 @@ module.exports.botData = {
 
 module.exports.botSettings = {
     active: false,
+    websocketURL: null,
     channel: null,
-    outputDevice: -1,
-    outputSource: null,
-    channels: {},
-    devices: {}
+    audioOffset: 675,
+    channels: {}
 }
 
 module.exports.settings = {

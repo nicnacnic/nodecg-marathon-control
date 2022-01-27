@@ -18,8 +18,9 @@ module.exports = (nodecg) => {
     const settings = nodecg.Replicant('settings', { defaultValue: defaultValue.settings }) // All dashboard settings.
     const streamSync = nodecg.Replicant('streamSync', { defaultValue: defaultValue.streamSync }) // Stream Sync data.
     const autoRecord = nodecg.Replicant('autoRecord', { defaultValue: defaultValue.autoRecord }) // Auto Record settings
-    const botSettings = nodecg.Replicant('botSettings', { defaultValue: defaultValue.botSettings }) // Bot settings.
     const botData = nodecg.Replicant('botData', { defaultValue: defaultValue.botData }) // Bot data.
+    const botSpeaking = nodecg.Replicant('botSpeaking', { persistent: false, defaultValue: [] }) // Bot speaking map.
+    const botSettings = nodecg.Replicant('botSettings', { defaultValue: defaultValue.botSettings }) // Bot settings.
     const adPlayer = nodecg.Replicant('adPlayer', { defaultValue: defaultValue.adPlayer }) // Ad player.
     const checklist = nodecg.Replicant('checklist', { defaultValue: defaultValue.checklist }) // Checklist tasks.
     const runDataActiveRun = nodecg.Replicant('runDataActiveRun', 'nodecg-speedcontrol') // Active run data from nodecg-speedcontrol.
@@ -105,7 +106,7 @@ module.exports = (nodecg) => {
         // Auto set streamkey.
         runDataActiveRun.on('change', (newVal, oldVal) => {
             if (checklist.value.started) checklist.value.playRun = true;
-            if (oldVal !== undefined && newVal !== undefined) {
+            if (oldVal !== undefined && newVal !== undefined && oldVal.id !== newVal.id) {
                 if (settings.value.autoSetRunners) {
                     try {
                         let i = 0;
@@ -187,7 +188,7 @@ module.exports = (nodecg) => {
             let filteredArray = newVal.delay.filter(e => e)
             let biggestDelay = Math.max(...filteredArray)
             let smallestDelay = Math.min(...filteredArray)
-            if (newVal.startSync || (newVal.autoSync && (biggestDelay - smallestDelay) > newVal.maxOffset) && filteredArray.length > 1) {
+            if (newVal.startSync || (newVal.autoSync && (biggestDelay - smallestDelay) > newVal.maxOffset) && filteredArray.length > 0) {
                 if (auto) nodecg.log.info('Auto stream sync activated on ' + Date() + '.')
                 let syncArray = [];
                 newVal.delay.forEach(delay => {
@@ -196,14 +197,16 @@ module.exports = (nodecg) => {
                         default: syncArray.push(biggestDelay - delay); break;
                     }
                 })
+                syncArray[4] = biggestDelay;
                 nodecg.sendMessage('syncStreams', syncArray)
                 setTimeout(() => {
                     streamSync.value.syncing = false;
                     streamSync.value.startSync = false;
                     checklist.value.syncStreams = true;
                     let array = newVal.delay;
-                    for (let i = 0; i < 4; i++) {
-                        if (array[i] !== null) array[i] = array[i] + syncArray[i];
+                    for (let i = 0; i < 5; i++) {
+                        if (i === 4) array[i] = biggestDelay;
+                        else if (array[i] !== null) array[i] = array[i] + syncArray[i];
                     }
                     streamSync.value.delay = array;
                 }, Math.max(...syncArray));
@@ -376,26 +379,17 @@ module.exports = (nodecg) => {
 
         function transitionBegin(scene) {
             settings.value.inTransition = true;
-            if (!adPlayer.value.adPlaying && scene !== settings.value.intermissionScene) {
-                settings.value.inIntermission = false;
-                let runnerSources = activeRunners.value;
-                if (!adPlayer.value.adPlaying) {
-                    runnerSources.forEach(source => {
-                        obs.send('SetAudioMonitorType', { sourceName: source.source, monitorType: 'monitorAndOutput' }).catch((error) => websocketError(error, getCurrentLine()));
-                    })
-                }
-            }
         }
 
         function updateCurrentScene(scene) {
             currentScene.value.program = scene;
             settings.value.inTransition = false;
-            if (scene === settings.value.intermissionScene) {
+            if (scene !== settings.value.intermissionScene && !adPlayer.value.adPlaying) {
+                settings.value.inIntermission = false;
+                settings.value.emergencyTransition = false;
+            }
+            else {
                 settings.value.inIntermission = true;
-                let runnerSources = activeRunners.value;
-                runnerSources.forEach(source => {
-                    obs.send('SetAudioMonitorType', { sourceName: source.source, monitorType: 'monitorOnly' }).catch((error) => websocketError(error, getCurrentLine()));
-                })
                 if (timer.value.state === 'finished') {
                     checklist.value = {
                         started: true,
@@ -412,7 +406,6 @@ module.exports = (nodecg) => {
                     if (!adPlayer.value.videoAds && !adPlayer.value.twitchAds) checklist.value.playAd = true;
                 }
             }
-            else settings.value.emergencyTransition = false; 
         }
 
         // Emergency Transition logic.

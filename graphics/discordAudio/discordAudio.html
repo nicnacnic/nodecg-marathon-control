@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <script src="./pcmPlayer.js"></script>
+</head>
+
+<body>
+    <script>
+        let timeout = 675;
+        let player = new PCMPlayer({
+            inputCodec: 'Int16',
+            channels: 2,
+            sampleRate: 48000,
+            flushTime: 100
+        });
+
+        let delay;
+
+        const botSettings = nodecg.Replicant('botSettings');
+        const streamSync = nodecg.Replicant('streamSync');
+
+        NodeCG.waitForReplicants(botSettings, streamSync).then(() => {
+            streamSync.on('change', (newVal, oldVal) => {
+                if (oldVal === undefined) {
+                    delay = newVal.delay[4] - botSettings.value.audioOffset;
+                    getAudio();
+                }
+            })
+        })
+
+        function getAudio() {
+            fetch('/bundles/nodecg-marathon-control/bot-audio')
+                .then(response => response.body)
+                .then(rb => {
+                    console.log('Connected')
+                    const reader = rb.getReader();
+                    return new ReadableStream({
+                        start(controller) {
+                            function push() {
+                                reader.read().then(({ done, value }) => {
+                                    if (done) {
+                                        console.log('done', done);
+                                        controller.close();
+                                        return;
+                                    }
+                                    controller.enqueue(value);
+                                    setTimeout(() => player.feed(value), delay);
+                                    push();
+                                })
+                            }
+                            push();
+                        }
+                    });
+                })
+        }
+
+        nodecg.listenFor(`syncStreams`, (sync) => {
+            if (sync[4] !== null) {
+                delay = sync[4] - botSettings.value.audioOffset;
+            }
+        }) 
+    </script>
+</body>
+
+</html>
