@@ -29,9 +29,48 @@ module.exports.start = (nodecg) => {
         })
 
         // Stream audio to browser.
+        // const app = nodecg.Router();
+        // app.get('/bundles/nodecg-marathon-control/bot-audio', (req, res) => mixer.pipe(res))
+        // nodecg.mount(app)
+
+        //const app = nodecg.Router();
+        const wss = new WebSocket.WebSocketServer({ noServer: true });
+
+        //const app = express();
+        // let server;
+        // app.use((req, res, next) => {
+        //     if (!server) {
+        //         server = req.connection.server;
+        //         //do fancy staffs with http-server
+        //     }
+        //     next();
+        // })
+
         const app = nodecg.Router();
-        app.get('/bundles/nodecg-marathon-control/bot-audio', (req, res) => mixer.pipe(res))
+
+        app.get('/bundles/nodecg-marathon-control/websocket/start', (req, res) => {
+            upgradeServer(req.connection.server)
+        })
+
         nodecg.mount(app)
+
+        mixer.on('data', (chunk) => {
+            wss.clients.forEach(function each(client) {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(chunk, { binary: true });
+                }
+            });
+        });
+
+        function upgradeServer(server) {
+            server.on('upgrade', (req, socket, head) => {
+                if (req.url === '/bundles/nodecg-marathon-control/websocket/data') {
+                    wss.handleUpgrade(req, socket, head, function done(ws) {
+                        wss.emit('connection', ws, req);
+                    });
+                }
+            })
+        }
 
         botData.value.users = {};
         nodecg.log.info('Bot has been started!')

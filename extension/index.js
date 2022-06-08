@@ -305,66 +305,134 @@ module.exports = (nodecg) => {
         }
 
         // Ad player.
-        function playAds(newVal) {
+        async function playAds(newVal) {
             nodecg.log.info('Ad requested on ' + Date() + '.')
-            let secondsLeft = 0;
             let transitionTime = 0;
             let videoSource = null;
-            obs.send('GetTransitionDuration').then(result => transitionTime = result['transition-duration']);
-            if (newVal.videoAds && newVal.twitchAds) {
-                videoSource = newVal.videoSources[Math.floor(Math.random() * newVal.videoSources.length)];
-                secondsLeft = Math.ceil((videoSource.duration + newVal.twitchAdLength + (transitionTime * 2)) / 1000);
+            let result = await obs.send('GetTransitionDuration');
+            transitionTime = result['transition-duration'];
+
+            adPlayer.value.adPlaying = true;
+
+            // Set button timer.
+            switch (true) {
+                case (newVal.videoAds && newVal.twitchAds): videoSource = newVal.videoSources[Math.floor(Math.random() * newVal.videoSources.length)]; secondsLeft = Math.ceil((videoSource.duration + (transitionTime * 2)) / 1000) + parseFloat(newVal.twitchAdLength); break;
+                case (newVal.videoAds): secondsLeft = Math.ceil((videoSource.duration + (transitionTime * 2)) / 1000); break;
+                case (newVal.twitchAds): secondsLeft = parseFloat(newVal.twitchAdLength); break;
             }
-            else if (newVal.videoAds) {
-                videoSource = newVal.videoSources[Math.floor(Math.random() * newVal.videoSources.length)];
-                secondsLeft = Math.ceil((videoSource.duration + (transitionTime * 2)) / 1000);
-            }
-            else if (newVal.twitchAds) newVal.twitchAdLength;
+
+            adPlayer.value.secondsLeft = secondsLeft;
+            secondsLeft--;
             const timerInterval = setInterval(() => {
                 adPlayer.value.secondsLeft = secondsLeft;
                 secondsLeft--;
-                if (secondsLeft < 0) {
-                    clearInterval(timerInterval);
-                    adPlayer.value.secondsLeft = 0;
-                    adPlayer.value.adPlaying = false;
-                    checklist.value.playAd = true;
-                }
+                if (secondsLeft < 0) clearInterval(timerInterval);
             }, 1000);
 
-            if (newVal.videoAds && newVal.videoScene !== null) {
-                playVideo(newVal);
-                setTimeout(() => {
-                    if (newVal.twitchAds) playTwitch(newVal);
-                }, Math.ceil(videoSource.duration + transitionTime))
-            }
-            else if (newVal.playTwitch) playTwitch(newVal)
+            if (newVal.videoAds) await playVideo(newVal);
+            if (newVal.twitchAds) await playTwitch(newVal)
 
-            function playVideo(newVal) {
-                let previewScene = currentScene.value.preview;
-                obs.send('SetCurrentScene', { "scene-name": newVal.videoScene }).then(() => {
+            try { clearInterval(timerInterval) } catch { };
+
+            adPlayer.value.secondsLeft = 0;
+            adPlayer.value.adPlaying = false;
+            checklist.value.playAd = true;
+
+            async function playVideo(newVal) {
+                return new Promise(async (resolve) => {
+                    let previewScene = currentScene.value.preview;
+                    obs.send('SetCurrentScene', { "scene-name": newVal.videoScene });
                     obs.once('TransitionEnd', () => {
                         obs.send('RestartMedia', { sourceName: videoSource.source })
-                        setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 1000)
-                        setTimeout(() => {
+                        obs.send('SetPreviewScene', { "scene-name": previewScene })
+                        setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 500);
+                        setTimeout(async () => {
+                            resolve();
                             previewScene = currentScene.value.preview;
-                            obs.send('SetCurrentScene', { "scene-name": settings.value.intermissionScene }).then(() => {
-                                obs.once('TransitionEnd', () => setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 1000))
-                            })
-                        }, videoSource.duration + 1000);
+                            obs.send('SetCurrentScene', { "scene-name": settings.value.intermissionScene })
+                            obs.once('TransitionEnd', () => setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 500))
+                        }, videoSource.duration + 1000)
                     });
                 });
             }
 
-            function playTwitch(newVal) {
-                nodecg.sendMessageToBundle('twitchStartCommercial', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength, fromDashboard: false })
-                    .then(() => nodecg.sendMessageToBundle('twitchStartCommercialTimer', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength }))
-                    .catch(() => {
-                        nodecg.log.error('Error playing Twitch ads. Are you sure your channel is an affiliate or partner?')
-                        clearInterval(timerInterval);
-                        adPlayer.value.adPlaying = false;
-                        checklist.value.playAd = true;
-                    });
+            async function playTwitch(newVal) {
+                return new Promise(async (resolve) => {
+                    nodecg.sendMessageToBundle('twitchStartCommercial', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength, fromDashboard: false })
+                    nodecg.sendMessageToBundle('twitchStartCommercialTimer', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength })
+                    setTimeout(() => resolve(), newVal.twitchAdLength * 1000);
+                })
             }
+
+
+            // let previewScene = currentScene.value.preview;
+            //     obs.send('SetCurrentScene', { "scene-name": newVal.videoScene }).then(() => {
+            //         obs.once('TransitionEnd', () => {
+            //             obs.send('RestartMedia', { sourceName: videoSource.source })
+            //             setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 1000)
+            //             setTimeout(() => {
+            //                 previewScene = currentScene.value.preview;
+            //                 obs.send('SetCurrentScene', { "scene-name": settings.value.intermissionScene }).then(() => {
+            //                     obs.once('TransitionEnd', () => setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 1000))
+            //                 })
+            //             }, videoSource.duration + 1000);
+            //         });
+            //     });
+            // if (newVal.videoAds && newVal.twitchAds) {
+            //     videoSource = newVal.videoSources[Math.floor(Math.random() * newVal.videoSources.length)];
+            //     secondsLeft = Math.ceil((videoSource.duration + newVal.twitchAdLength + (transitionTime * 2)) / 1000);
+            // }
+            // else if (newVal.videoAds) {
+            //     videoSource = newVal.videoSources[Math.floor(Math.random() * newVal.videoSources.length)];
+            //     secondsLeft = Math.ceil((videoSource.duration + (transitionTime * 2)) / 1000);
+            // }
+            // else if (newVal.twitchAds) secondsLeft = newVal.twitchAdLength;
+            // const timerInterval = setInterval(() => {
+            //     adPlayer.value.secondsLeft = secondsLeft;
+            //     secondsLeft--;
+            //     if (secondsLeft < 0) {
+            //         clearInterval(timerInterval);
+            //         adPlayer.value.secondsLeft = 0;
+            //         adPlayer.value.adPlaying = false;
+            //         checklist.value.playAd = true;
+            //     }
+            // }, 1000);
+
+            // if (newVal.videoAds && newVal.videoScene !== null) {
+            //     playVideo(newVal);
+            //     setTimeout(() => {
+            //         if (newVal.twitchAds) playTwitch(newVal);
+            //     }, Math.ceil(videoSource.duration + transitionTime))
+            // }
+            // else if (newVal.playTwitch) playTwitch(newVal)
+
+            // function playVideo(newVal) {
+            //     let previewScene = currentScene.value.preview;
+            //     obs.send('SetCurrentScene', { "scene-name": newVal.videoScene }).then(() => {
+            //         obs.once('TransitionEnd', () => {
+            //             obs.send('RestartMedia', { sourceName: videoSource.source })
+            //             setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 1000)
+            //             setTimeout(() => {
+            //                 previewScene = currentScene.value.preview;
+            //                 obs.send('SetCurrentScene', { "scene-name": settings.value.intermissionScene }).then(() => {
+            //                     obs.once('TransitionEnd', () => setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 1000))
+            //                 })
+            //             }, videoSource.duration + 1000);
+            //         });
+            //     });
+            // }
+
+            // function playTwitch(newVal) {
+            //     console.log('playing Twitch ads')
+            //     nodecg.sendMessageToBundle('twitchStartCommercial', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength, fromDashboard: false })
+            //         .then(() => nodecg.sendMessageToBundle('twitchStartCommercialTimer', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength }))
+            //         .catch(() => {
+            //             nodecg.log.error('Error playing Twitch ads. Are you sure your channel is an affiliate or partner?')
+            //             clearInterval(timerInterval);
+            //             adPlayer.value.adPlaying = false;
+            //             checklist.value.playAd = true;
+            //         });
+            // }
         }
 
         // Get ad player sources. 
