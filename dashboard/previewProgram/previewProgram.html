@@ -5,8 +5,6 @@
 	<meta charset="UTF-8">
 	<link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
 	<script src="../nodecgComponents/nodecgComponents.js"></script>
-	<link rel="stylesheet" href="previewProgram.css" />
-	<script src="previewProgram.js"></script>
 </head>
 
 <body>
@@ -19,11 +17,148 @@
 		<div id="transitionButtons">
 			<button id="transition" onclick="nodecg.sendMessage('startTransition')">
 				Transition</button>
-			<button id="emergency" onclick="nodecg.sendMessage('emergencyTransition')">
+			<button id="emergency" onclick="obsStatus.value.emergencyTransition = true">
 				Emergency Transition</button>
 		</div>
 	</div>
 	<iframe id="program" frameBorder="0" allow="autoplay"></iframe>
+	<script>
+		const obsStatus = nodecg.Replicant('obsStatus');
+		const checklist = nodecg.Replicant('checklist')
+		const settings = nodecg.Replicant('settings')
+
+		window.onload = () => {
+			NodeCG.waitForReplicants(obsStatus, checklist, settings).then(() => {
+
+				// Open welcome dialog on first launch.
+				if (settings.value.firstLaunch) {
+					setTimeout(() => {
+						nodecg.getDialog('welcome').open()
+						settings.value.firstLaunch = false;
+					}, 2000)
+				}
+
+				// Update buttons, icons, and VBO.Ninja room codes.
+				settings.on('change', (newVal) => {
+					switch (newVal.previewCode) {
+						case '': document.getElementById('preview').src = ``; break;
+						default: document.getElementById('preview').src = `https://vdo.ninja/?view=${newVal.previewCode}&autostart&cleanish&transparent&mute`; break;
+					}
+					switch (newVal.programCode) {
+						case '': document.getElementById('program').src = ``; break;
+						default: document.getElementById('program').src = `https://vdo.ninja/?view=${newVal.programCode}&autostart&cleanish&transparent&mute`; break;
+					}
+				})
+
+				obsStatus.on('change', (newVal) => {
+					switch (newVal.streaming) {
+						case true: document.getElementById('streaming').style.color = 'limegreen'; break;
+						case false: document.getElementById('streaming').style.color = 'white'; break;
+					}
+					switch (newVal.recording) {
+						case true: document.getElementById('recording').style.color = 'red'; break;
+						case false: document.getElementById('recording').style.color = 'white'; break;
+					}
+					switch (newVal.emergencyTransition) {
+						case true: document.getElementById("emergency").setAttribute("disabled", "true"); break;
+						case false: document.getElementById("emergency").removeAttribute("disabled"); break;
+					}
+					if (!settings.value.forceChecklist || checklist.value.completed || !checklist.value.started) {
+						switch (newVal.inTransition) {
+							case true: document.getElementById("transition").setAttribute("disabled", "true"); document.getElementById("emergency").setAttribute("disabled", "true"); break;
+							case false: document.getElementById("transition").removeAttribute("disabled"); break;
+						}
+					}
+				})
+
+				checklist.on('change', (newVal) => {
+					if (settings.value.forceChecklist && newVal.started) {
+						let transition = document.getElementById('transition');
+						switch (newVal.completed) {
+							case false:
+								transition.setAttribute('disabled', 'true');
+								transition.setAttribute('title', "Please complete the checklist to unlock this button.");
+								break;
+							case true:
+								transition.removeAttribute('disabled');
+								transition.removeAttribute('title');
+								break;
+						}
+
+						// if (obsStatus.value.inIntermission && newVal.started && !newVal.completed) {
+						// 	document.getElementById("transition").setAttribute("disabled", "true")
+						// 	document.getElementById("transition").setAttribute('title', "Please complete the checklist to unlock this button.");
+						// }
+						// else if (obsStatus.value.inIntermission && newVal.completed) {
+						// 	document.getElementById("transition").removeAttribute("disabled")
+						// 	document.getElementById("transition").removeAttribute('title');
+						// }
+					}
+				})
+			});
+		}
+	</script>
+	<style>
+		body {
+			width: 100%;
+			height: 100%;
+			display: flex;
+		}
+
+		#preview {
+			width: 460px;
+			height: 282.27px;
+			float: left;
+		}
+
+		#transitionDiv {
+			width: calc(100% - 460px - 460px - 65px);
+			height: 282px;
+			padding: 0 20px;
+			display: inline-block;
+			text-align: center;
+			vertical-align: middle;
+			margin: 0;
+		}
+
+		#streamStatus {
+			width: 100%;
+			height: 24px;
+			margin-top: 5px;
+		}
+
+		.material-icons {
+			font-size: 24px;
+			vertical-align: middle;
+		}
+
+		#streaming {
+			margin-right: 3px;
+		}
+
+		#recording {
+			margin-left: 3px;
+		}
+
+		#transitionButtons {
+			width: 100%;
+			height: auto;
+			margin-top: 15px;
+			top: 32px;
+			vertical-align: middle;
+		}
+
+		#transition {
+			margin-top: 45px;
+			margin-bottom: 15px;
+		}
+
+		#program {
+			width: 460px;
+			height: 282.27px;
+			float: right;
+		}
+	</style>
 </body>
 
 </html>

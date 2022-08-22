@@ -1,170 +1,75 @@
 const activeRunners = nodecg.Replicant('activeRunners');
-const streamSync = nodecg.Replicant('streamSync')
 const audioSources = nodecg.Replicant('audioSources');
-const botSettings = nodecg.Replicant('botSettings');
-const sliderChange = new Event('input');
 
 window.onload = () => {
 
-	NodeCG.waitForReplicants(audioSources, streamSync, botSettings).then(() => {
+	NodeCG.waitForReplicants(audioSources, activeRunners).then(() => {
 
 		audioSources.on('change', (newVal, oldVal) => {
-			if (oldVal === undefined || newVal.length !== oldVal.length)
-				parseAudioSources();
-			else {
-				let changedElements = [];
-				newVal.forEach((player, index) => {
-					if (JSON.stringify(player) !== JSON.stringify(oldVal[index]))
-						changedElements.push(player)
-				})
-				changedElements.forEach(element => {
-					setTimeout(() => document.querySelector(`#slider[source="${element.name}"]`).dispatchEvent(sliderChange), 250);
-					document.querySelector(`#slider[source="${element.name}"]`).value = dbToPercent(element.volume);
-					document.querySelector(`#offset[source="${element.name}"]`).value = element.offset / 1000000;
-					let muteButtonIcon = document.querySelector(`#mute[source="${element.name}"]`);
-					switch (element.muted) {
-						case true: muteButtonIcon.innerHTML = 'volume_off'; muteButtonIcon.style.color = 'red'; break;
-						case false: muteButtonIcon.innerHTML = 'volume_up'; muteButtonIcon.style.color = 'white'; break;
-					}
-				});
+			if (!oldVal || newVal.length !== oldVal.length) return createAudioSources(newVal);
+			let changedSources = [];
+			newVal.forEach((source, index) => {
+				if (JSON.stringify(source) !== JSON.stringify(oldVal[index])) changedSources.push(source)
+			})
+			for (const source of changedSources) {
+				document.querySelector(`.volumeLabel[source="${source.name}"]`).innerHTML = dbToString(source.volume.db)
+				document.querySelector(`.mute[source="${source.name}"]`).innerHTML = (source.muted) ? 'volume_off' : 'volume_up';
+				document.querySelector(`.mute[source="${source.name}"]`).style.color = (source.muted) ? 'red' : 'white';
+				document.querySelector(`.slider[source="${source.name}"]`).value = dbToPercent(source.volume.db);
+				document.querySelector(`.slider[source="${source.name}"]`).style.setProperty('--slider-value', `${document.querySelector(`.slider[source="${source.name}"]`).value}%`);
+				document.querySelector(`.offset[source="${source.name}"]`).value = source.offset;
 			}
-		});
-
-		activeRunners.on('change', (newVal, oldVal) => {
-			let changedElements = [];
-			if (oldVal === undefined)
-				changedElements = newVal;
-			else {
-				for (let i = 0; i < newVal.length; i++) {
-					if (JSON.stringify(newVal[i]) !== JSON.stringify(oldVal[i])) {
-						changedElements.push(newVal[i])
-					}
-				}
-			}
-		});
-	})
-}
-
-function parseAudioSources() {
-	let newArray = [];
-	audioSources.value.forEach(element => newArray.push(element))
-	newArray.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
-	document.getElementById("sourceSliders").innerHTML = '';
-	let playerSources = [];
-	activeRunners.value.forEach(player => {
-		playerSources.push(player.source)
-	})
-	newArray.forEach(element => {
-		if (playerSources.includes(element.name))
-			createSlider(element)
-	})
-	// if (botSettings.value.active && botSettings.value.outputSource !== null)
-	// 	createSlider(newArray.find(element => element.name === botSettings.value.outputSource), true)
-	newArray.forEach(element => {
-		if (!playerSources.includes(element.name))
-			createSlider(element)
+		})
 	});
 }
 
-function createSlider(element) {
-	let containerDiv = createElement('div', {
-		class: 'sliderContainer'
-	})
 
-	let label = createElement('span', {
-		class: 'label',
-		innerHTML: element.name
-	})
-
-	let volumeLabel = createElement('span', {
-		class: 'volumeLabel',
-		id: 'volume',
-		source: element.name,
-		innerHTML: dbToString(element.volume),
-	})
-
-	let sliderDiv = createElement('div', {
-		class: 'sliderDiv'
-	})
-
-	let muteButton = createElement('button', {
-		class: 'muteButton',
-	})
-
-	let muteState = createElement('span', {
-		class: 'material-icons',
-		id: 'mute',
-		source: element.name,
-		onClick: `nodecg.sendMessage('toggleMute', '${element.name}')`
-	})
-
-	switch (element.muted) {
-		case true: muteState.style.color = 'red'; muteState.innerHTML = 'volume_off'; break;
-		case false: muteState.style.color = 'white'; muteState.innerHTML = 'volume_up'; break;
+function createAudioSources(newVal) {
+	let newArray = [];
+	newVal.forEach(element => newArray.push(element))
+	let audioSources = newArray.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+	for (const playerSource of activeRunners.value) {
+		let source = audioSources.find(x => x.name === playerSource.source);
+		if (source) createSlider(source);
 	}
-
-	let slider = createElement('input', {
-		type: 'range',
-		id: 'slider',
-		source: element.name,
-		min: 0,
-		max: 100,
-		value: dbToPercent(element.volume),
-		onInput: `document.querySelector('#volume[source="${element.name}"]').innerHTML = dbToString(percentToDb(this.value))`,
-		onChange: `nodecg.sendMessage('setVolume', { source: '${element.name}', volume: percentToMul(this.value) })`
-	})
-
-	let inputDiv = createElement('div', {
-		class: 'input'
-	})
-
-	let syncOffset = createElement('input', {
-		type: 'number',
-		id: 'offset',
-		source: element.name,
-		value: element.offset / 1000000,
-		onchange: `nodecg.sendMessage('setOffset', { source: '${element.name}', offset: this.value * 1000000 })`
-	})
-
-	let syncOffsetLabel = createElement('label', {
-		innerHTML: 'Offset'
-	})
-
-	let syncOffsetBorder = createElement('div', {
-		class: 'inputBorder'
-	})
-
-	muteButton.appendChild(muteState)
-	inputDiv.appendChild(syncOffset)
-	inputDiv.appendChild(syncOffsetLabel)
-	inputDiv.appendChild(syncOffsetBorder)
-	sliderDiv.appendChild(muteButton)
-	sliderDiv.appendChild(slider)
-	sliderDiv.appendChild(inputDiv)
-	containerDiv.appendChild(label)
-	containerDiv.appendChild(volumeLabel)
-	containerDiv.appendChild(sliderDiv)
-	document.getElementById('sourceSliders').appendChild(containerDiv)
-}
-
-function createElement(type, attributes) {
-	let element = document.createElement(type);
-	for (let attr in attributes) {
-		if (attr === 'innerHTML')
-			element.innerHTML = attributes[attr];
-		else
-			element.setAttribute(attr, attributes[attr]);
+	for (const source of audioSources) {
+		if (document.querySelector(`.volumeLabel[source="${source.name}"]`) === null) createSlider(source);
 	}
-	return element;
 }
 
-function percentToMul(value) {
-	value = value / 100;
-	value = 20 * Math.log10(value);
-	value = Math.pow(10, -Math.abs(value / 10));
-	value = value.toFixed(2);
-	return parseFloat(value);
+function createSlider(source) {
+	let slider = `
+	<div class="sliderContainer">
+		<span class="label">${source.name}</span>
+		<span class="volumeLabel" source="${source.name}">${dbToString(source.volume.db)}</span>
+		<div class="sliderDiv">
+			<button class="muteButton">
+				<span class="material-icons mute" source="${source.name}" onclick="nodecg.sendMessage('toggleMute', '${source.name}')" style="color: ${(source.muted) ? 'red' : 'white'}">${(source.muted) ? 'volume_off' : 'volume_up'}</span>
+			</button>
+			<input type="range" class="slider" source="${source.name}" min="0" max="100" value="${dbToPercent(source.volume.db)}" onInput="setLabel('${source.name}', this.value)" onChange="nodecg.sendMessage('setVolume', { source: '${source.name}', volume: parseFloat(percentToDb(this.value)) })">
+			<div class="input">	
+				<input type="number" class="offset" source="${source.name}" value="${source.offset}" onChange="nodecg.sendMessage('setOffset', { source: '${source.name}', offset: parseInt(this.value) })">
+				<label>Offset</label>
+				<div class="inputBorder">
+			</div>
+		</div>
+	</div>`
+	document.getElementById('sourceSliders').innerHTML += slider;
+	document.querySelector(`.slider[source="${source.name}"]`).style.setProperty('--slider-value', `${document.querySelector(`.slider[source="${source.name}"]`).value}%`);
 }
+
+function setLabel(source, value) {
+	document.querySelector(`.volumeLabel[source="${source}"]`).innerHTML = dbToString(percentToDb(value));
+	document.querySelector(`.slider[source="${source}"]`).style.setProperty('--slider-value', `${document.querySelector(`.slider[source="${source}"]`).value}%`);
+}
+
+// function percentToMul(value) {
+// 	value = value / 100;
+// 	value = 20 * Math.log10(value);
+// 	value = Math.pow(10, -Math.abs(value / 10));
+// 	value = value.toFixed(2);
+// 	return parseFloat(value);
+// }
 
 function dbToPercent(value) { return ((Math.pow(10, value / 40)) * 100).toFixed(0) }
 

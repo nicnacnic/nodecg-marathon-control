@@ -10,34 +10,37 @@ module.exports.audioSourceTypes = [
 
 module.exports.activeRunners = [
     {
-        source: 'Player 1',
-        streamKey: '',
+        source: null,
+        streamKey: null,
         cam: false
     },
     {
-        source: 'Player 2',
-        streamKey: '',
+        source: null,
+        streamKey: null,
         cam: false
     },
     {
-        source: 'Player 3',
-        streamKey: '',
+        source: null,
+        streamKey: null,
         cam: false
     },
     {
-        source: 'Player 4',
-        streamKey: '',
+        source: null,
+        streamKey: null,
         cam: false
     }
 ];
 
 module.exports.streamSync = {
-    syncing: false,
-    startSync: false,
+    active: false,
+    status: {
+        delays: false,
+        syncing: false,
+        error: false,
+    },
     autoSync: false,
     maxOffset: 500,
-    error: false,
-    delay: [null, null, null, null, null]
+    delay: [null, null, null, null],
 }
 
 module.exports.autoRecord = {
@@ -61,17 +64,24 @@ module.exports.botSettings = {
 module.exports.settings = {
     previewCode: '',
     programCode: '',
-    inIntermission: false,
-    inTransition: false,
-    emergencyTransition: false,
-    streaming: false,
-    recording: false,
     intermissionScene: '',
+    autoRecord: false,
+    filenameFormatting: '%CCYY-%MM-%DD %hh-%mm-%ss',
     autoSetLayout: false,
     autoSetRunners: false,
     forceChecklist: false,
     firstLaunch: true
 };
+
+module.exports.status = {
+    previewScene: '',
+    programScene: '',
+    inIntermission: false,
+    inTransition: false,
+    emergencyTransition: false,
+    streaming: false,
+    recording: false,
+}
 
 module.exports.stats = {
     cpuUsage: 0.00,
@@ -91,14 +101,18 @@ module.exports.stats = {
 module.exports.checklist = {
     started: false,
     completed: false,
-    playRun: false,
-    playAd: false,
-    verifyStream: false,
-    syncStreams: false,
-    checkAudio: false,
-    checkInfo: false,
-    checkReady: false,
-    finalCheck: false
+    default: {
+        playRun: false,
+        playAd: false,
+        verifyStream: false,
+        syncStreams: false,
+        checkAudio: false,
+        checkInfo: false,
+        checkReady: false,
+        finalCheck: false
+    },
+    custom: {},
+    customOld: {}
 }
 
 module.exports.adPlayer = {
@@ -107,6 +121,5 @@ module.exports.adPlayer = {
     twitchAds: false,
     twitchAdLength: 0,
     secondsLeft: 0,
-    videoScene: null,
-    videoSources: []
+    videoScene: null
 }

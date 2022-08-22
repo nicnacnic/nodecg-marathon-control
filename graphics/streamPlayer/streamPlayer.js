@@ -9,7 +9,7 @@ function createPlayer(num) {
         video = document.querySelector('video');
 
         activeRunners.on('change', (newVal, oldVal) => {
-            if (oldVal == undefined || oldVal[playerID].streamKey !== newVal[playerID].streamKey && newVal[playerID].streamKey !== '') {
+            if (oldVal == undefined || oldVal[playerID].streamKey !== newVal[playerID].streamKey && newVal[playerID].streamKey !== null) {
                 hls = new Hls();
                 hls.attachMedia(video);
                 hls.on(Hls.Events.MEDIA_ATTACHED, () => {
@@ -18,7 +18,7 @@ function createPlayer(num) {
                     playing = true;
                 });
             }
-            else if (oldVal[playerID].streamKey !== newVal[playerID].streamKey && newVal[playerID].streamKey === '') {
+            else if (oldVal[playerID].streamKey !== newVal[playerID].streamKey && newVal[playerID].streamKey === null) {
                 streamSync.value.delay[playerID] = null;
                 hls.destroy();
                 playing = false;
@@ -27,24 +27,29 @@ function createPlayer(num) {
     })
 }
 
-nodecg.listenFor('getDelay', (time) => {
-    if (playing) {
-        var canvas = document.createElement('canvas');
-        canvas.width = 1920;
-        canvas.height = 1080;
-        document.body.appendChild(canvas)
-        var ctx = canvas.getContext('2d');
-        const delayInterval = setInterval(() => {
-            ctx.drawImage(video, 0, 0, 1920, 1080);
-            let colorData = ctx.getImageData(25, 1055, 1, 1);
-            if (colorData.data[0] === 255) {
-                clearInterval(delayInterval);
-                streamSync.value.delay[playerID] = Date.now() - time;
-                canvas.remove();
-                nodecg.sendMessage('returnDelay', playerID)
-            }
-        }, 20)
-    }
+nodecg.listenFor('getDelay', () => {
+    if (!playing) return;
+    let time = Date.now();
+    let canvas = document.createElement('canvas');
+    canvas.width = 1920;
+    canvas.height = 1080;
+    document.body.appendChild(canvas)
+    let ctx = canvas.getContext('2d');
+    let count = 0;
+    const delayInterval = setInterval(() => {
+        ctx.drawImage(video, 0, 0, 1920, 1080);
+        let colorData = ctx.getImageData(25, 1055, 1, 1);
+        if (colorData.data[0] >= 250) {
+            clearInterval(delayInterval);
+            streamSync.value.delay[playerID] = Date.now() - time;
+            console.log(Date.now() - time)
+            canvas.remove();
+        }
+        count++;
+        if (count > 3000) { //1500 for 30s
+            clearInterval(delayInterval);
+        }
+    }, 20);
 })
 
 nodecg.listenFor(`syncStreams`, (sync) => {

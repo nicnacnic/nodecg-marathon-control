@@ -4,8 +4,8 @@ const botSettings = nodecg.Replicant('botSettings')
 window.onload = () => {
     NodeCG.waitForReplicants(botData, botSettings).then(() => {
         switch (botSettings.value.active) {
-            case false: document.getElementById('botInactive').style.display = 'inline-block'; break;
-            case true: document.getElementById('botActive').style.display = 'inline-block'; break;
+            case false: document.querySelector('body').style.display = 'inherit'; break;
+            case true: document.querySelector('body').style.display = 'none'; break;
         }
         botData.on('change', (newVal, oldVal) => {
             if (oldVal === undefined || newVal.users === {} || Object.keys(newVal.users).length !== Object.keys(oldVal.users).length) {

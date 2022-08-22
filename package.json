@@ -20,6 +20,17 @@
           "gif",
           "png"
         ]
+      },
+      {
+        
+        "name": "ads",
+        "title": "Video Ads",
+        "allowedTypes": [
+          "mp4",
+          "webm",
+          "ogg",
+          "mkv"
+        ]
       }
     ],
     "dashboardPanels": [
@@ -57,7 +68,7 @@
         "name": "audio",
         "title": "Audio",
         "width": 3,
-        "file": "audio/audio.html"
+        "file": "audio.html"
       },
       {
         "name": "stats",
@@ -129,57 +140,58 @@
     ],
     "graphics": [
       {
-        "file": "delay/delay.html",
-        "width": 1,
-        "height": 1
+        "file": "adPlayer.html",
+        "width": 1920,
+        "height": 1080,
+        "singleInstance": true
       },
       {
-        "file": "discordAudio/discordAudio.html",
+        "file": "discordAudio.html",
         "width": 1,
         "height": 1,
         "singleInstance": true
       },
       {
-        "file": "streamPlayer/streamPlayer1.html",
+        "file": "streamPlayer/1.html",
         "width": 1920,
         "height": 1080,
         "singleInstance": true
       },
       {
-        "file": "streamPlayer/streamPlayer2.html",
+        "file": "streamPlayer/2.html",
         "width": 1920,
         "height": 1080,
         "singleInstance": true
       },
       {
-        "file": "streamPlayer/streamPlayer3.html",
+        "file": "streamPlayer/3.html",
         "width": 1920,
         "height": 1080,
         "singleInstance": true
       },
       {
-        "file": "streamPlayer/streamPlayer4.html",
+        "file": "streamPlayer/4.html",
         "width": 1920,
         "height": 1080,
         "singleInstance": true
       },
       {
-        "file": "camCover/camCover1.html",
+        "file": "camCover/1.html",
         "width": 1920,
         "height": 1080
       },
       {
-        "file": "camCover/camCover2.html",
+        "file": "camCover/2.html",
         "width": 1920,
         "height": 1080
       },
       {
-        "file": "camCover/camCover3.html",
+        "file": "camCover/3.html",
         "width": 1920,
         "height": 1080
       },
       {
-        "file": "camCover/camCover4.html",
+        "file": "camCover/4.html",
         "width": 1920,
         "height": 1080
       }
@@ -190,9 +202,8 @@
     "@discordjs/voice": "^0.7.5",
     "audio-mixer": "^2.1.4",
     "discord.js": "^13.3.1",
-    "get-current-line": "^6.6.0",
-    "obs-websocket-js": "4.0.3",
+    "obs-websocket-js": "^5.0.0",
     "prism-media": "^1.3.2",
-    "ws": "^8.4.2"
+    "ws": "^8.8.1"
   }
 }

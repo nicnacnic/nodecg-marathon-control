@@ -8,37 +8,9 @@
 </head>
 
 <body>
-    <style>
-        body {
-            margin-top: 0;
-        }
-
-        button {
-            margin-top: 15px;
-        }
-
-        .select {
-            margin-top: 15px;
-        }
-
-        #muteSourcesDiv {
-            width: 100%;
-            height: 100%;
-        }
-
-        #muteSources {
-            padding-top: 26px;
-            color: #FFFFFF;
-            border: none;
-        }
-
-        #bottomText {
-            margin-top: 10px;
-        }
-    </style>
     <button id="twitchAds" onClick="adPlayer.value.twitchAds = !adPlayer.value.twitchAds"></button>
     <button id="videoAds" onClick="adPlayer.value.videoAds = !adPlayer.value.videoAds"></button>
-    <button id="refreshVideoSource" onClick="nodecg.sendMessage('getAdSources')">Refresh Video Ad Sources</button>
+    <button id="refreshVideoSource" onClick="nodecg.sendMessage('refreshVideoSource')">Refresh Video Ad Source</button>
     <div class="select">
         <select id="twitchAdLength" onchange="adPlayer.value.twitchAdLength = this.value;">
             <option value="30">30s</option>
@@ -75,18 +47,43 @@
             })
 
             sceneList.on('change', (newVal) => {
-                let select = document.getElementById("sceneList");
-                select.innerHTML = '';
-                for (let i = 0; i < newVal.length; i++) {
-                    let option = document.createElement("option");
-                    option.innerHTML = newVal[i];
-                    if (newVal[i] === adPlayer.value.videoScene)
-                        option.setAttribute('selected', "")
-                    select.appendChild(option);
+                let dropdown = document.getElementById("sceneList");
+                dropdown.innerHTML = '';
+                for (let scene of newVal) {
+                    let option = `<option ${(scene === adPlayer.value.videoScene) ? 'selected' : ''}>${scene}</option>`
+                    dropdown.innerHTML += option;
                 }
             });
         })
     </script>
+    <style>
+        body {
+            margin-top: 0;
+        }
+
+        button {
+            margin-top: 15px;
+        }
+
+        .select {
+            margin-top: 15px;
+        }
+
+        #muteSourcesDiv {
+            width: 100%;
+            height: 100%;
+        }
+
+        #muteSources {
+            padding-top: 26px;
+            color: #FFFFFF;
+            border: none;
+        }
+
+        #bottomText {
+            margin-top: 10px;
+        }
+    </style>
 </body>
 
 </html>

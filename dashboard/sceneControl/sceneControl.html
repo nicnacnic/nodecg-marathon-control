@@ -12,7 +12,7 @@
 <body>
         <div id="sceneDiv">
             <div class="select">
-                <select id="sceneList" onchange="currentScene.value.preview = this.value;">
+                <select id="sceneList" onchange="nodecg.sendMessage('setPreviewScene', this.value)">
                 </select>
                 <label>Scene</label>
                 <div class="selectBorder"></div>
@@ -21,7 +21,7 @@
         <div id="runnerInfo">
             <div class="playerDiv" id="p1Div">
                 <div class="input">
-                    <input type="text" id="p1Input" onChange="activeRunners.value[0].streamKey = this.value;"></input>
+                    <input type="text" player="0" class="runnerInput" onChange="setStreamKey(this)"></input>
                     <label>Player 1</label>
                     <div></div>
                 </div>
@@ -32,7 +32,7 @@
             </div>
             <div class="playerDiv" id="p2Div">
                 <div class="input">
-                    <input type="text" id="p2Input" onChange="activeRunners.value[1].streamKey = this.value;"></input>
+                    <input type="text" player="1" class="runnerInput" onChange="setStreamKey(this)"></input>
                     <label>Player 2</label>
                     <div></div>
                 </div>
@@ -43,7 +43,7 @@
             </div>
             <div class="playerDiv" id="p3Div">
                 <div class="input">
-                    <input type="text" id="p3Input" onChange="activeRunners.value[2].streamKey = this.value;"></input>
+                    <input type="text" player="2" class="runnerInput" onChange="setStreamKey(this)"></input>
                     <label>Player 3</label>
                     <div></div>
                 </div>
@@ -54,7 +54,7 @@
             </div>
             <div class="playerDiv" id="p4Div">
                 <div class="input">
-                    <input type="text" id="p4Input" onChange="activeRunners.value[3].streamKey = this.value;"></input>
+                    <input type="text" player="3" class="runnerInput" onChange="setStreamKey(this)"></input>
                     <label>Player 4</label>
                     <div></div>
                 </div>

@@ -1,21 +1,23 @@
-const OBSWebSocket = require('obs-websocket-js');
+const OBSWebSocket = require('obs-websocket-js').default;
 const path = require('path')
-const getCurrentLine = require('get-current-line').default
 const defaultValue = require('./defaultValues');
 const DACBot = require('./bot');
+const { EventSubscription } = require('obs-websocket-js');
+const WebSocket = require('ws');
 
-module.exports = (nodecg) => {
+module.exports = async (nodecg) => {
     const obs = new OBSWebSocket();
     let lastRun = +new Date();
-    let connectionError = false;
+    let serverUpgrade = false;
+    let clients = { delay: [], bot: [] };
 
     // Initialize replicants.
     const activeRunners = nodecg.Replicant('activeRunners', { defaultValue: defaultValue.activeRunners }); // Active runner data.
-    const currentScene = nodecg.Replicant('currentScene', { defaultValue: { preview: '', program: '' } }); // Current scene in OBS.
-    const sceneList = nodecg.Replicant('sceneList', { persistent: false, defaultValue: [] }); // List of all available scenes.
+    const sceneList = nodecg.Replicant('sceneList', { persistent: false }); // List of all available scenes.
     const audioSources = nodecg.Replicant('audioSources'); // List of all OBS audio sources.
     const stats = nodecg.Replicant('stats', { persistent: false, defaultValue: defaultValue.stats }); // All OBS stats.
     const settings = nodecg.Replicant('settings', { defaultValue: defaultValue.settings }) // All dashboard settings.
+    const obsStatus = nodecg.Replicant('obsStatus', { persistent: false }) // OBS data such as scenes.
     const streamSync = nodecg.Replicant('streamSync', { defaultValue: defaultValue.streamSync }) // Stream Sync data.
     const autoRecord = nodecg.Replicant('autoRecord', { defaultValue: defaultValue.autoRecord }) // Auto Record settings
     const botData = nodecg.Replicant('botData', { defaultValue: defaultValue.botData }) // Bot data.
@@ -26,485 +28,520 @@ module.exports = (nodecg) => {
     const runDataActiveRun = nodecg.Replicant('runDataActiveRun', 'nodecg-speedcontrol') // Active run data from nodecg-speedcontrol.
     const timer = nodecg.Replicant('timer', 'nodecg-speedcontrol') // Timer from nodecg-speedcontrol.
 
-    obs.connect({ address: nodecg.bundleConfig.address, password: nodecg.bundleConfig.password }).then(async () => {
-        nodecg.log.info('Connected to OBS instance!')
+    if (!nodecg.bundleConfig.websocket.ip || nodecg.bundleConfig.websocket.ip === '' || !nodecg.bundleConfig.websocket.port || nodecg.bundleConfig.websocket.port === '') {
+        nodecg.log.error('OBS Websocket address has not been defined! Please add the IP address and port in the config.');
+        process.exit();
+    }
 
-        settings.value.emergencyTransition = false;
+    obs.connect(`ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}`, nodecg.bundleConfig.websocket.password, {
+        eventSubscriptions: EventSubscription.All
+    }).catch(() => {
+        nodecg.log.error(`Could not connect to OBS instance at ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}.`)
+        process.exit();
+    });
+
+    obs.once('Identified', () => setup(true))
+
+    // Set up delay page.
+    let app = nodecg.Router();
+    app.get('/delay', (req, res) => res.sendFile(path.join(__dirname, '../graphics/delay.html')));
+
+    let wsServer = new WebSocket.WebSocketServer({ noServer: true, });
+
+    app.get('/bundles/nodecg-marathon-control/ws/start', (req, res) => {
+        if (!serverUpgrade) upgradeServer(req.connection.server);
+        res.sendStatus(200);
+    });
+
+    nodecg.mount(app);
+
+    function upgradeServer(server) {
+        serverUpgrade = true;
+        server.on('upgrade', (req, socket, head) => {
+            if (req.url.includes('/bundles/nodecg-marathon-control/ws/data')) {
+                wsServer.handleUpgrade(req, socket, head, (wsConnection) => {
+                    wsServer.emit('connection', wsConnection, req);
+                    wsServer.ws = wsConnection;
+                });
+            }
+        })
+    }
+
+    wsServer.on('connection', (ws, req) => {
+        if (req.url.includes('/bundles/nodecg-marathon-control/ws/data/')) {
+            let split = req.url.split('/bundles/nodecg-marathon-control/ws/data/')[1];
+            switch (split) {
+                case 'delay': clients.delay.push(ws); break;
+                case 'bot': clients.bot.push(ws); break;
+            }
+        }
+    })
+
+    // Start DACBot.
+    if (botSettings.value.active) {
+        switch (nodecg.bundleConfig.botToken) {
+            case '': nodecg.log.warn('No bot token has been provided!'); break;
+            default: DACBot.start(nodecg, wsServer.bot); break;
+        }
+    }
+
+    //obs.on('InputVolumeMeters', (data) => console.log(data.inputs[0]))
+
+    // Listen to OBS events.
+    // General events.
+    obs.on('ExitStarted', () => websocketDisconnect());
+    obs.on('CurrentSceneCollectionChanged', () => {
+        getScenes();
+        getAudioSources();
+    })
+
+    // Scene events.
+    obs.on('SceneCreated', () => getScenes());
+    obs.on('SceneRemoved', () => getScenes());
+    obs.on('SceneNameChanged', () => getScenes());
+    obs.on('CurrentPreviewSceneChanged', (data) => obsStatus.value.previewScene = data.sceneName);
+    obs.on('CurrentProgramSceneChanged', (data) => obsStatus.value.programScene = data.sceneName)
+
+    // Audio events.
+    obs.on('InputCreated', () => getAudioSources());
+    obs.on('InputRemoved', () => getAudioSources());
+    obs.on('InputNameChanged', () => getAudioSources());
+    obs.on('InputVolumeChanged', (data) => audioSources.value.find(input => input.name === data.inputName).volume = { mul: data.inputVolumeMul.toFixed(1), db: data.inputVolumeDb.toFixed(1) })
+    obs.on('InputMuteStateChanged', (data) => audioSources.value.find(input => input.name === data.inputName).muted = data.inputMuted)
+    obs.on('InputAudioSyncOffsetChanged', (data) => audioSources.value.find(input => input.name === data.inputName).offset = data.inputAudioSyncOffset)
+
+    // Output events.
+    obs.on('StreamStateChanged', (data) => obsStatus.value.streaming = data.outputActive);
+    obs.on('RecordStateChanged', (data) => obsStatus.value.recording = data.outputActive);
+
+    // Transition events.
+    obs.on('SceneTransitionStarted', () => transition())
+
+    // Listen for requests from clients.
+    nodecg.listenFor('setPreviewScene', (value) => send('SetCurrentPreviewScene', { sceneName: value }))
+    nodecg.listenFor('startTransition', () => send('TriggerStudioModeTransition'));
+    nodecg.listenFor('setVolume', (value) => send('SetInputVolume', { inputName: value.source, inputVolumeDb: (value.volume === null) ? -100.0 : value.volume }));
+    nodecg.listenFor('toggleMute', (value) => send('ToggleInputMute', { inputName: value }))
+    nodecg.listenFor('setOffset', (value) => send('SetInputAudioSyncOffset', { inputName: value.source, inputAudioSyncOffset: value.offset }))
+    nodecg.listenFor('toggleStream', () => send('ToggleStream'));
+    nodecg.listenFor('toggleRecording', () => send('ToggleRecord'));
+    nodecg.listenFor('restartMedia', (value) => send('PressInputPropertiesButton', { inputName: value.source, propertyName: 'refreshnocache' }))
+    nodecg.listenFor('startAd', (value, callback) => playAds(value, callback));
+    nodecg.listenFor('refreshVideoSource', () => refreshVideoSource());
+
+    async function setup(msg) {
+        if (msg) nodecg.log.info(`Successfully connected to OBS instance at ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}`)
+
         streamSync.value.syncing = false;
         streamSync.value.startSync = false;
         adPlayer.value.adPlaying = false;
 
-        // Get OBS data.
-        obs.send('GetStreamingStatus').then(result => { settings.value.streaming = result.streaming; settings.value.recording = result.recording })
-        obs.send('GetStudioModeStatus').then(result => {
-            if (!result.studioMode) obs.send('EnableStudioMode').catch((error) => websocketError(error, getCurrentLine()));
-            obs.send('GetPreviewScene').then(result => currentScene.value.preview = result.name).catch((error) => websocketError(error, getCurrentLine()))
-            obs.send('GetCurrentScene').then(result => updateCurrentScene(result.name)).catch((error) => websocketError(error, getCurrentLine()))
-        });
+        await send('SetStudioModeEnabled', { studioModeEnabled: true });
 
-        // Start DACBot.
-        if (botSettings.value.active) {
-            switch (nodecg.bundleConfig.botToken) {
-                case '': nodecg.log.warn('No bot token has been provided!'); break;
-                default: DACBot.start(nodecg); break;
-            }
-        }
-
-        // Get audio sources.
-        getAudioSources();
-
-        // Get scene list.
-        getScenes()
+        let streamStatus = await send('GetStreamStatus');
+        let recordingStatus = await send('GetRecordStatus');
+        let previewScene = await send('GetCurrentPreviewScene');
+        let programScene = await send('GetCurrentProgramScene');
+        obsStatus.value = {
+            previewScene: previewScene.currentPreviewSceneName,
+            programScene: programScene.currentProgramSceneName,
+            inIntermission: (programScene.currentProgramSceneName === settings.value.intermissionScene) ? true : false,
+            inTransition: false,
+            emergencyTransition: false,
+            streaming: streamStatus.outputActive,
+            recording: recordingStatus.outputActive,
+        };
 
         // Auto Stream Sync™
         setInterval(() => {
             if (streamSync.value.autoSync && (timer.value.state === 'running' || timer.value.state === 'paused')) getDelay(streamSync.value)
         }, 300000)
 
-        // Listening for OBS events.
-        obs.on('error', (error) => websocketError(error, getCurrentLine()));
-        obs.on('Exiting', () => { connectionError = true; websocketError() });
-        obs.on('StreamStatus', (data) => stats.value = data)
-        obs.on('StreamStarted', () => settings.value.streaming = true)
-        obs.on('StreamStopped', () => settings.value.streaming = false)
-        obs.on('RecordingStarted', () => settings.value.recording = true)
-        obs.on('RecordingStopped', () => settings.value.recording = false)
-        obs.on('TransitionBegin', (data) => transitionBegin(data['to-scene']))
-        obs.on('TransitionEnd', (data) => updateCurrentScene(data.toScene))
-        obs.on('SourceCreated', () => getAudioSources())
-        obs.on('SourceDestroyed', () => getAudioSources())
-        obs.on('ScenesChanged', (data) => getScenesLimiter());
-        obs.on('SwitchScenes', (data) => currentScene.value.program = data.sceneName)
-        obs.on('PreviewSceneChanged', (data) => currentScene.value.preview = data.sceneName)
-        obs.on('SourceVolumeChanged', (data) => audioSources.value.find(element => element.name === data.sourceName).volume = data.volumeDb.toFixed(1))
-        obs.on('SourceMuteStateChanged', (data) => audioSources.value.find(element => element.name === data.sourceName).muted = data.muted)
-        obs.on('SourceAudioSyncOffsetChanged', (data) => audioSources.value.find(element => element.name === data.sourceName).offset = data.syncOffset)
+        setInterval(async () => {
+            let data = await send('GetStats');
+            let streamData = {};
+            if (obsStatus.streaming) streamData = await send('GetOutputStatus', { outputName: 'adv_stream' });
+            stats.value = {
+                cpuUsage: `${data.cpuUsage.toFixed(1)}%`,
+                fps: `${data.activeFps.toFixed(1)} FPS`,
+                kbitsPerSec: `? kb/s`,
+                averageFrameTime: `${data.averageFrameRenderTime.toFixed(1)} ms`,
+                skippedFrames: `${data.renderSkippedFrames} / ${data.renderTotalFrames} (${((data.renderSkippedFrames / data.renderTotalFrames) * 100).toFixed(1)}%)`,
+                missedFrames: `${data.outputSkippedFrames} / ${data.outputTotalFrames} (${((data.outputSkippedFrames / data.outputTotalFrames) * 100).toFixed(1)}%)`,
+                droppedFrames: (streamData.outputSkippedFrames !== undefined) ? `${streamData.outputSkippedFrames} / ${streamData.outputTotalFrames} (${((streamData.outputSkippedFrames / streamData.outputTotalFrames) * 100).toFixed(1)}%)` : '0 / 0 (NaN%)',
+                uptime: (streamData.outputTimecode) ? streamData.outputTimecode.slice(0, -4) : '00:00:00',
+                diskSpace: `${(data.availableDiskSpace / 1024).toFixed(1)} GB`,
+                autoRecord: (settings.value.autoRecord) ? 'Active' : 'Inactive',
+            }
+        }, 2000)
 
-        // Listening for requests from clients.
-        nodecg.listenFor('startTransition', () => obs.send('TransitionToProgram').catch((error) => websocketError(error, getCurrentLine())));
-        nodecg.listenFor('emergencyTransition', () => emergencyTransition())
-        nodecg.listenFor('setVolume', (value) => obs.send('SetVolume', { source: value.source, volume: value.volume }).catch((error) => websocketError(error, getCurrentLine())));
-        nodecg.listenFor('toggleMute', (value) => obs.send('ToggleMute', { source: value }).catch((error) => websocketError(error, getCurrentLine())));
-        nodecg.listenFor('setOffset', (value) => obs.send('SetSyncOffset', { source: value.source, offset: value.offset }).catch((error) => websocketError(error, getCurrentLine())));
-        nodecg.listenFor('toggleStream', () => obs.send('StartStopStreaming').catch((error) => websocketError(error, getCurrentLine())));
-        nodecg.listenFor('toggleRecording', () => obs.send('StartStopRecording').catch((error) => websocketError(error, getCurrentLine())));
-        nodecg.listenFor('restartMedia', (value) => obs.send('RefreshBrowserSource', { sourceName: value }).catch((error) => websocketError(error, getCurrentLine())));
-        nodecg.listenFor('getAdSources', () => getAdSources());
-        nodecg.listenFor('reauthenticate', () => {
-            obs.disconnect();
-            obs.connect({ address: nodecg.bundleConfig.address, password: nodecg.bundleConfig.password }).then(() => {
-                nodecg.log.warn('Reauthentication requested on ' + Date() + '.')
-            }).catch((error) => websocketError(error, getCurrentLine()));
-        })
+        getScenes();
+        getAudioSources();
+    }
 
-        // Change preview scene.
-        currentScene.on('change', (newVal) => { if (newVal !== undefined) obs.send('SetPreviewScene', { "scene-name": newVal.preview }).catch((error) => websocketError(error, getCurrentLine())); });
-
-        // Change filename formatting.
-        autoRecord.on('change', (newVal) => { if (newVal.active) setFilenameFormatting(newVal.filenameFormatting) })
-
-        // Auto set streamkey.
-        runDataActiveRun.on('change', (newVal, oldVal) => {
-            if (checklist.value.started) checklist.value.playRun = true;
-            if (oldVal !== undefined && newVal !== undefined && oldVal.id !== newVal.id) {
-                if (settings.value.autoSetRunners) {
-                    try {
-                        let i = 0;
-                        newVal.teams.forEach(team => {
-                            team.players.forEach(player => {
-                                activeRunners.value[i].streamKey = player.social.twitch;
-                                i++;
-                            })
+    runDataActiveRun.on('change', (newVal, oldVal) => {
+        if (!oldVal) return;
+        if (newVal.id !== oldVal.id) {
+            if (checklist.value.started) checklist.value.default.playRun = true;
+            if (settings.value.autoSetRunners) {
+                try {
+                    let i = 0;
+                    newVal.teams.forEach(team => {
+                        team.players.forEach(player => {
+                            activeRunners.value[i].streamKey = player.social.twitch;
+                            i++;
                         })
-                    } catch { };
-                }
-                if (settings.value.autoSetLayout && newVal.customData !== undefined && newVal.customData.layout !== undefined) try { currentScene.value.preview = newVal.customData.layout } catch { }
-                if (autoRecord.value.active) setFilenameFormatting(autoRecord.value.filenameFormatting)
-            }
-        })
-
-        // Auto record logic.
-        settings.on('change', (newVal, oldVal) => {
-            if (autoRecord.value.active && (oldVal !== undefined && newVal.inIntermission !== oldVal.inIntermission)) {
-                if (!newVal.inIntermission && !settings.value.recording && !adPlayer.value.adPlaying) {
-                    settings.value.emergencyTransition = false;
-                    obs.send('StartRecording').catch((error) => websocketError(error, getCurrentLine()));
-                }
-                else if (!newVal.inIntermission) settings.value.emergencyTransition = false;
-                else if (newVal.inIntermission && settings.value.recording && !settings.value.emergencyTransition) obs.send('StopRecording').catch((error) => websocketError(error, getCurrentLine()));
-            }
-        })
-
-        streamSync.on('change', (newVal) => {
-            if (newVal.startSync && !newVal.syncing) getDelay(newVal);
-        })
-
-        adPlayer.on('change', (newVal, oldVal) => {
-            if (oldVal === undefined || oldVal.videoScene !== newVal.videoScene) getAdSources();
-            else if (!oldVal.adPlaying && newVal.adPlaying) playAds(newVal);
-        })
-
-        checklist.on('change', (newVal) => {
-            if (newVal.playRun && newVal.playAd && newVal.verifyStream && newVal.syncStreams && newVal.checkAudio && newVal.checkInfo && newVal.checkReady && newVal.finalCheck) checklist.value.completed = true;
-            else checklist.value.completed = false;
-        })
-
-        // Get stream delay.
-        function getDelay(newVal) {
-            streamSync.value.error = false;
-            streamSync.value.syncing = true;
-            if (newVal.startSync) nodecg.log.info('Stream sync requested on ' + Date() + '.');
-            let returnValue = [false, false, false, false];
-            for (let i = 0; i < 4; i++) {
-                if (activeRunners.value[i].streamKey === '') {
-                    returnValue[i] = true;
-                    streamSync.value.delay[i] = null;
-                }
-            }
-            let time = Date.now()
-            nodecg.sendMessage('flashSquare');
-            nodecg.sendMessage('getDelay', time);
-            nodecg.listenFor('returnDelay', (index) => returnValue[index] = true);
-            let checkNum = 0;
-            const waitForReturn = setInterval(() => {
-                if (returnValue.every(value => value === true)) {
-                    clearInterval(waitForReturn);
-                    syncStreams()
-                }
-                checkNum++;
-                if (checkNum > 120) {
-                    clearInterval(waitForReturn);
-                    streamSync.value.error = true;
-                    streamSync.value.syncing = false;
-                    streamSync.value.startSync = false;
-                    checklist.value.syncStreams = true;
-                }
-            }, 250)
-        }
-
-        // Stream Sync™
-        function syncStreams(auto) {
-            let newVal = streamSync.value;
-            let filteredArray = newVal.delay.filter(e => e)
-            let biggestDelay = Math.max(...filteredArray)
-            let smallestDelay = Math.min(...filteredArray)
-            if (newVal.startSync || (newVal.autoSync && (biggestDelay - smallestDelay) > newVal.maxOffset) && filteredArray.length > 0) {
-                if (auto) nodecg.log.info('Auto stream sync activated on ' + Date() + '.')
-                let syncArray = [];
-                newVal.delay.forEach(delay => {
-                    switch (delay) {
-                        case null: syncArray.push(null); break;
-                        default: syncArray.push(biggestDelay - delay); break;
-                    }
-                })
-                syncArray[4] = biggestDelay;
-                nodecg.sendMessage('syncStreams', syncArray)
-                setTimeout(() => {
-                    streamSync.value.syncing = false;
-                    streamSync.value.startSync = false;
-                    checklist.value.syncStreams = true;
-                    let array = newVal.delay;
-                    for (let i = 0; i < 5; i++) {
-                        if (i === 4) array[i] = biggestDelay;
-                        else if (array[i] !== null) array[i] = array[i] + syncArray[i];
-                    }
-                    streamSync.value.delay = array;
-                }, Math.max(...syncArray));
-            }
-            else {
-                streamSync.value.syncing = false;
-                checklist.value.syncStreams = true;
-                streamSync.value.startSync = false;
-            }
-        }
-
-        // Fetch scene list.
-        function getScenes() {
-            sceneList.value = [];
-            obs.send('GetSceneList').then(result => {
-                currentScene.value.program = result.currentScene;
-                result.scenes.forEach(scene => {
-                    sceneList.value.push(scene.name);
-                })
-            });
-        }
-
-        // Fetch scene list limiter (because of a bug in OBS Websocket JS)
-        function getScenesLimiter() {
-            const now = +new Date();
-            if (now - lastRun > 500) {
-                lastRun = now;
-                getScenes()
-            }
-        }
-
-        // Set filename formatting.
-        function setFilenameFormatting(filename) {
-            filename = filename.replace(new RegExp('%GAME', 'g'), runDataActiveRun.value.game)
-            filename = filename.replace(new RegExp('%CAT', 'g'), runDataActiveRun.value.category)
-            filename = filename.replace(new RegExp('%RGN', 'g'), runDataActiveRun.value.region)
-            filename = filename.replace(new RegExp('%REL', 'g'), runDataActiveRun.value.release)
-            filename = filename.replace(new RegExp('%TWIT', 'g'), runDataActiveRun.value.gameTwitch)
-            filename = filename.replace(new RegExp('%SYS', 'g'), runDataActiveRun.value.system)
-            filename = filename.replace(new RegExp('%EST', 'g'), runDataActiveRun.value.estimate)
-            filename = filename.replace(new RegExp('%SET', 'g'), runDataActiveRun.value.setupTime)
-            if (filename.includes('%RNR')) {
-                let playerString = '';
-                runDataActiveRun.value.teams.forEach(team => {
-                    team.players.forEach(player => {
-                        if (playerString === '') playerString = player.name;
-                        else playerString = playerString.concat(', ', player.name)
                     })
-                })
-                filename = filename.replace(new RegExp('%RNR', 'g'), playerString)
-            }
-            filename = filename.replaceAll('%', '%%')
-            filename = filename.replaceAll('<', '')
-            filename = filename.replaceAll('>', '')
-            filename = filename.replaceAll(':', '')
-            filename = filename.replaceAll('"', '')
-            filename = filename.replaceAll('/', '')
-            filename = filename.replaceAll('\\', '')
-            filename = filename.replaceAll('|', '')
-            filename = filename.replaceAll('?', '')
-            filename = filename.replaceAll('*', '')
-            obs.send('SetFilenameFormatting', { "filename-formatting": filename })
-        }
-
-        // Populate audio sources.
-        function getAudioSources() {
-            audioSources.value = [];
-            obs.send('GetSourcesList').then(result => {
-                result.sources.forEach(source => {
-                    if (defaultValue.audioSourceTypes.includes(source.typeId)) {
-                        if (source.typeId === 'browser_source') {
-                            obs.send('GetSourceSettings', { sourceName: source.name }).then((data) => {
-                                if (data.sourceSettings['reroute_audio'] !== undefined && data.sourceSettings['reroute_audio']) {
-                                    switch (true) {
-                                        case (data.sourceSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer1.html')): activeRunners.value[0].source = source.name; break;
-                                        case (data.sourceSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer2.html')): activeRunners.value[1].source = source.name; break;
-                                        case (data.sourceSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer3.html')): activeRunners.value[2].source = source.name; break;
-                                        case (data.sourceSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer4.html')): activeRunners.value[3].source = source.name; break;
-                                    }
-                                    getAudioSourceData(source.name, source.typeId)
-                                }
-                            }).catch((error) => websocketError(error, getCurrentLine()));
-                        }
-                        else getAudioSourceData(source.name, source.typeId)
+                    for (let j = i; j < 4; j++) {
+                        activeRunners.value[i].streamKey = null;
                     }
-                })
-            }).catch((error) => websocketError(error, getCurrentLine()));
+                } catch { };
+            }
+            if (settings.value.autoSetLayout && newVal.customData !== undefined && newVal.customData.layout !== undefined) try { send('SetCurrentPreviewScene', { sceneName: newVal.customData.layout }) } catch { }
+            if (settings.value.filenameFormatting) setFilenameFormatting(autoRecord.value.filenameFormatting)
         }
+    })
 
-        function getAudioSourceData(source, type) {
-            obs.send('GetVolume', { source: source, useDecibel: true }).then(result => {
-                obs.send('GetSyncOffset', { source: source }).then(data => {
-                    audioSources.value.push({ name: source, type: type, volume: result.volume.toFixed(1), muted: result.muted, offset: data.offset })
-                }).catch((error) => websocketError(error, getCurrentLine()));
-            }).catch((error) => websocketError(error, getCurrentLine()));
+    async function getScenes() {
+        const scenes = await send('GetSceneList');
+        let sceneArray = [];
+        for (const scene of scenes.scenes) {
+            sceneArray.push(scene.sceneName);
         }
+        sceneList.value = sceneArray;
+    }
 
-        // Ad player.
-        async function playAds(newVal) {
-            nodecg.log.info('Ad requested on ' + Date() + '.')
-            let transitionTime = 0;
-            let videoSource = null;
-            let result = await obs.send('GetTransitionDuration');
-            transitionTime = result['transition-duration'];
+    async function getAudioSources() {
+        let inputs = await send('GetInputList');
+        let inputList = inputs.inputs.filter((input) => { return defaultValue.audioSourceTypes.includes(input.inputKind) })
+        let audioSourceList = [];
+        for (const input of inputList) {
+            if (input.inputName.includes('--')) continue;
+            if (input.inputKind === 'browser_source') setPlayerSource(input);
+            let volume = await send('GetInputVolume', { inputName: input.inputName });
+            let mute = await send('GetInputMute', { inputName: input.inputName });
+            let offset = await send('GetInputAudioSyncOffset', { inputName: input.inputName });
+            audioSourceList.push({ name: input.inputName, type: input.inputKind, volume: { mul: volume.inputVolumeMul.toFixed(1), db: volume.inputVolumeDb.toFixed(1) }, muted: mute.inputMuted, offset: offset.inputAudioSyncOffset, updateLocation: 'server' })
+        }
+        audioSources.value = audioSourceList;
 
-            adPlayer.value.adPlaying = true;
-
-            // Set button timer.
+        async function setPlayerSource(input) {
+            let sourceSettings = await send('GetInputSettings', { inputName: input.inputName })
+            if (Object.keys(sourceSettings.inputSettings).length <= 0) return;
             switch (true) {
-                case (newVal.videoAds && newVal.twitchAds): videoSource = newVal.videoSources[Math.floor(Math.random() * newVal.videoSources.length)]; secondsLeft = Math.ceil((videoSource.duration + (transitionTime * 2)) / 1000) + parseFloat(newVal.twitchAdLength); break;
-                case (newVal.videoAds): secondsLeft = Math.ceil((videoSource.duration + (transitionTime * 2)) / 1000); break;
-                case (newVal.twitchAds): secondsLeft = parseFloat(newVal.twitchAdLength); break;
+                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer1.html')): activeRunners.value[0].source = input.inputName; break;
+                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer2.html')): activeRunners.value[1].source = input.inputName; break;
+                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer3.html')): activeRunners.value[2].source = input.inputName; break;
+                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer4.html')): activeRunners.value[3].source = input.inputName; break;
             }
-
-            adPlayer.value.secondsLeft = secondsLeft;
-            secondsLeft--;
-            const timerInterval = setInterval(() => {
-                adPlayer.value.secondsLeft = secondsLeft;
-                secondsLeft--;
-                if (secondsLeft < 0) clearInterval(timerInterval);
-            }, 1000);
-
-            if (newVal.videoAds) await playVideo(newVal);
-            if (newVal.twitchAds) await playTwitch(newVal)
-
-            try { clearInterval(timerInterval) } catch { };
-
-            adPlayer.value.secondsLeft = 0;
-            adPlayer.value.adPlaying = false;
-            checklist.value.playAd = true;
-
-            async function playVideo(newVal) {
-                return new Promise(async (resolve) => {
-                    let previewScene = currentScene.value.preview;
-                    obs.send('SetCurrentScene', { "scene-name": newVal.videoScene });
-                    obs.once('TransitionEnd', () => {
-                        obs.send('RestartMedia', { sourceName: videoSource.source })
-                        obs.send('SetPreviewScene', { "scene-name": previewScene })
-                        setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 500);
-                        setTimeout(async () => {
-                            resolve();
-                            previewScene = currentScene.value.preview;
-                            obs.send('SetCurrentScene', { "scene-name": settings.value.intermissionScene })
-                            obs.once('TransitionEnd', () => setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 500))
-                        }, videoSource.duration + 1000)
-                    });
-                });
-            }
-
-            async function playTwitch(newVal) {
-                return new Promise(async (resolve) => {
-                    nodecg.sendMessageToBundle('twitchStartCommercial', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength, fromDashboard: false })
-                    nodecg.sendMessageToBundle('twitchStartCommercialTimer', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength })
-                    setTimeout(() => resolve(), newVal.twitchAdLength * 1000);
-                })
-            }
-
-
-            // let previewScene = currentScene.value.preview;
-            //     obs.send('SetCurrentScene', { "scene-name": newVal.videoScene }).then(() => {
-            //         obs.once('TransitionEnd', () => {
-            //             obs.send('RestartMedia', { sourceName: videoSource.source })
-            //             setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 1000)
-            //             setTimeout(() => {
-            //                 previewScene = currentScene.value.preview;
-            //                 obs.send('SetCurrentScene', { "scene-name": settings.value.intermissionScene }).then(() => {
-            //                     obs.once('TransitionEnd', () => setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 1000))
-            //                 })
-            //             }, videoSource.duration + 1000);
-            //         });
-            //     });
-            // if (newVal.videoAds && newVal.twitchAds) {
-            //     videoSource = newVal.videoSources[Math.floor(Math.random() * newVal.videoSources.length)];
-            //     secondsLeft = Math.ceil((videoSource.duration + newVal.twitchAdLength + (transitionTime * 2)) / 1000);
-            // }
-            // else if (newVal.videoAds) {
-            //     videoSource = newVal.videoSources[Math.floor(Math.random() * newVal.videoSources.length)];
-            //     secondsLeft = Math.ceil((videoSource.duration + (transitionTime * 2)) / 1000);
-            // }
-            // else if (newVal.twitchAds) secondsLeft = newVal.twitchAdLength;
-            // const timerInterval = setInterval(() => {
-            //     adPlayer.value.secondsLeft = secondsLeft;
-            //     secondsLeft--;
-            //     if (secondsLeft < 0) {
-            //         clearInterval(timerInterval);
-            //         adPlayer.value.secondsLeft = 0;
-            //         adPlayer.value.adPlaying = false;
-            //         checklist.value.playAd = true;
-            //     }
-            // }, 1000);
-
-            // if (newVal.videoAds && newVal.videoScene !== null) {
-            //     playVideo(newVal);
-            //     setTimeout(() => {
-            //         if (newVal.twitchAds) playTwitch(newVal);
-            //     }, Math.ceil(videoSource.duration + transitionTime))
-            // }
-            // else if (newVal.playTwitch) playTwitch(newVal)
-
-            // function playVideo(newVal) {
-            //     let previewScene = currentScene.value.preview;
-            //     obs.send('SetCurrentScene', { "scene-name": newVal.videoScene }).then(() => {
-            //         obs.once('TransitionEnd', () => {
-            //             obs.send('RestartMedia', { sourceName: videoSource.source })
-            //             setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 1000)
-            //             setTimeout(() => {
-            //                 previewScene = currentScene.value.preview;
-            //                 obs.send('SetCurrentScene', { "scene-name": settings.value.intermissionScene }).then(() => {
-            //                     obs.once('TransitionEnd', () => setTimeout(() => obs.send('SetPreviewScene', { "scene-name": previewScene }), 1000))
-            //                 })
-            //             }, videoSource.duration + 1000);
-            //         });
-            //     });
-            // }
-
-            // function playTwitch(newVal) {
-            //     console.log('playing Twitch ads')
-            //     nodecg.sendMessageToBundle('twitchStartCommercial', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength, fromDashboard: false })
-            //         .then(() => nodecg.sendMessageToBundle('twitchStartCommercialTimer', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength }))
-            //         .catch(() => {
-            //             nodecg.log.error('Error playing Twitch ads. Are you sure your channel is an affiliate or partner?')
-            //             clearInterval(timerInterval);
-            //             adPlayer.value.adPlaying = false;
-            //             checklist.value.playAd = true;
-            //         });
-            // }
-        }
-
-        // Get ad player sources. 
-        function getAdSources() {
-            adPlayer.value.videoSources = [];
-            obs.send('GetSceneItemList', { sceneName: adPlayer.value.videoScene }).then(result => {
-                result.sceneItems.forEach(source => {
-                    if (source.sourceKind === 'ffmpeg_source') obs.send('GetMediaDuration', { sourceName: source.sourceName }).then(duration => adPlayer.value.videoSources.push({ source: source.sourceName, duration: duration.mediaDuration })).catch((error) => websocketError(error, getCurrentLine()));
-                })
-            }).catch((error) => websocketError(error, getCurrentLine()));
-        }
-
-        function transitionBegin(scene) {
-            settings.value.inTransition = true;
-        }
-
-        function updateCurrentScene(scene) {
-            currentScene.value.program = scene;
-            settings.value.inTransition = false;
-            if (scene !== settings.value.intermissionScene && !adPlayer.value.adPlaying) {
-                settings.value.inIntermission = false;
-                settings.value.emergencyTransition = false;
-            }
-            else {
-                settings.value.inIntermission = true;
-                if (timer.value.state === 'finished') {
-                    checklist.value = {
-                        started: true,
-                        completed: false,
-                        playRun: false,
-                        playAd: false,
-                        verifyStream: false,
-                        syncStreams: false,
-                        checkAudio: false,
-                        checkInfo: false,
-                        checkReady: false,
-                        finalCheck: false
-                    }
-                    if (!adPlayer.value.videoAds && !adPlayer.value.twitchAds) checklist.value.playAd = true;
-                }
-            }
-        }
-
-        // Emergency Transition logic.
-        function emergencyTransition() {
-            settings.value.emergencyTransition = true;
-            nodecg.sendMessageToBundle('timerPause', 'nodecg-speedcontrol');
-            obs.send('SetPreviewScene', { "scene-name": settings.value.intermissionScene }).then(() => {
-                obs.send('TransitionToProgram').catch((error) => websocketError(error, getCurrentLine()));
-                nodecg.log.warn('Emergency transition activated on ' + Date() + '.')
-            }).catch((error) => websocketError(error, getCurrentLine()));
-        };
-    }).catch(() => { nodecg.log.error('Could not connect to OBS. Wrong websocket address?'); process.exit(); });
-
-    // Error codes.
-    function websocketError(error, line) {
-        if (!connectionError && error !== undefined) {
-            switch (error.error) {
-                case 'Authentication Failed.': nodecg.log.error('OBS authentication failed. Wrong websocket password?'); process.exit(); break;
-                case 'There is no Socket connection available.': connectionLost(); break;
-                default: nodecg.log.error('An OBS error has occured at line ' + line.line + '\n' + JSON.stringify(error)); break;
-            }
-        }
-        else {
-            nodecg.log.error('Disconnected from OBS. Please check your connection.');
-            const obsReconnect = setInterval(() => {
-                obs.connect({ address: nodecg.bundleConfig.address, password: nodecg.bundleConfig.password }).then(() => {
-                    nodecg.log.info('Reconnected to OBS!');
-                    connectionError = false;
-                    clearInterval(obsReconnect);
-                }).catch((error) => { nodecg.log.warn(JSON.stringify(error)) });
-            }, 5000);
         }
     }
+
+    obsStatus.on('change', (newVal, oldVal) => {
+        if (!oldVal) return;
+        if (newVal.emergencyTransition !== oldVal.emergencyTransition) emergencyTransition(newVal);
+        if (newVal.inIntermission !== oldVal.inIntermission) updateChecklist(newVal);
+    })
+
+    // Auto record logic.
+    async function transition() {
+        obsStatus.value.inTransition = true;
+        let startRecord = false;
+        if (obsStatus.value.previewScene === settings.value.intermissionScene) {
+            obsStatus.value.inIntermission = true;
+            if (settings.value.autoRecord && obsStatus.value.recording && !obsStatus.value.emergencyTransition) await send('StopRecord');
+        }
+        if (obsStatus.value.previewScene !== settings.value.intermissionScene) {
+            startRecord = true;
+            obsStatus.value.emergencyTransition = false;
+        }
+
+        obs.once('SceneTransitionEnded', async () => {
+            obsStatus.value.inTransition = false;
+            if (startRecord) {
+                obsStatus.value.inIntermission = false;
+                if (!obsStatus.value.recording && settings.value.autoRecord) await send('StartRecord');
+            }
+        });
+    }
+
+    // Emergency transition logic.
+    async function emergencyTransition(data) {
+        if (!data.emergencyTransition) {
+            await send('TriggerStudioModeTransition');
+            return;
+        }
+        await send('SetCurrentPreviewScene', { sceneName: settings.value.intermissionScene });
+        await send('TriggerStudioModeTransition');
+        return;
+    }
+
+    function updateChecklist(newVal) {
+        if ((newVal.inIntermission) && timer.value.state === 'finished') {
+            let def = {};
+            let custom = {};
+            for (let item of Object.keys(checklist.value.default)) {
+                def[item] = false;
+            }
+            for (let item of Object.keys(checklist.value.custom)) {
+                custom[item] = false;
+            }
+            checklist.value = {
+                started: true,
+                completed: false,
+                default: def,
+                custom: custom
+            }
+        }
+    }
+
+    checklist.on('change', (newVal, oldVal) => {
+        if (!oldVal && JSON.stringify(newVal.customOld) !== JSON.stringify(nodecg.bundleConfig.checklist)) createCustomChecklist(newVal);
+        if (newVal.started) {
+            for (let item of Object.keys(newVal.default)) {
+                if (!newVal.default[item]) return checklist.value.completed = false;
+            }
+            for (let item of Object.keys(newVal.custom)) {
+                if (!newVal.custom[item]) return checklist.value.completed = false;
+            }
+            setTimeout(() => {
+                checklist.value.completed = true;
+            }, 100);
+        }
+    })
+
+    function createCustomChecklist(newVal) {
+        checklist.value.customOld = nodecg.bundleConfig.checklist;
+        let custom = {};
+        for (let item of Object.keys(nodecg.bundleConfig.checklist)) {
+            custom[item] = false;
+        }
+        checklist.value.custom = custom;
+    }
+
+    // Set filename formatting.
+    async function setFilenameFormatting(filename) {
+        filename = filename.replace(new RegExp('%GAME', 'g'), runDataActiveRun.value.game)
+        filename = filename.replace(new RegExp('%CAT', 'g'), runDataActiveRun.value.category)
+        filename = filename.replace(new RegExp('%RGN', 'g'), runDataActiveRun.value.region)
+        filename = filename.replace(new RegExp('%REL', 'g'), runDataActiveRun.value.release)
+        filename = filename.replace(new RegExp('%TWIT', 'g'), runDataActiveRun.value.gameTwitch)
+        filename = filename.replace(new RegExp('%SYS', 'g'), runDataActiveRun.value.system)
+        filename = filename.replace(new RegExp('%EST', 'g'), runDataActiveRun.value.estimate)
+        filename = filename.replace(new RegExp('%SET', 'g'), runDataActiveRun.value.setupTime)
+        if (filename.includes('%RNR')) {
+            let playerString = '';
+            runDataActiveRun.value.teams.forEach(team => {
+                team.players.forEach(player => {
+                    if (playerString === '') playerString = player.name;
+                    else playerString = playerString.concat(', ', player.name)
+                })
+            })
+            filename = filename.replace(new RegExp('%RNR', 'g'), playerString)
+        }
+        filename = filename.replaceAll('%', '%%')
+        filename = filename.replaceAll('<', '')
+        filename = filename.replaceAll('>', '')
+        filename = filename.replaceAll(':', '')
+        filename = filename.replaceAll('"', '')
+        filename = filename.replaceAll('/', '')
+        filename = filename.replaceAll('\\', '')
+        filename = filename.replaceAll('|', '')
+        filename = filename.replaceAll('?', '')
+        filename = filename.replaceAll('*', '')
+        await send('SetProfileParameter', { parameterCategory: 'Output', parameterName: 'FilenameFormatting', parameterValue: filename })
+    }
+
+    // Get stream delay.
+    nodecg.listenFor('startStreamSync', () => sendSyncSignal())
+
+    streamSync.on('change', (newVal, oldVal) => {
+        if (!oldVal) return;
+        if (newVal.active && newVal.status.delays && JSON.stringify(newVal.delay) !== JSON.stringify(oldVal.delay)) checkDelayArray(newVal);
+    })
+
+    function sendSyncSignal() {
+        nodecg.log.info('Stream sync requested on ' + Date() + '.');
+        streamSync.value.delay = [null, null, null, null];
+        streamSync.value.status = { delays: true, syncing: false, error: false };
+        clients.delay.forEach(async client => {
+            client.send(JSON.stringify({ type: 'delay', data: 'Trigger ty square!' }));
+        });
+        nodecg.sendMessage('getDelay');
+        setTimeout(() => {
+            if (streamSync.value.status.delays) {
+                checklist.value.default.syncStreams = true;
+                streamSync.value.status = { delays: false, syncing: false, error: true };
+            }
+        }, 60000)
+    }
+
+    function checkDelayArray(newVal) {
+        let numRunners = activeRunners.value.filter((x) => x.streamKey !== null);
+        let numDelay = newVal.delay.filter((x) => x !== null);
+        if (numDelay.length >= numRunners.length) syncStreams(newVal);
+    }
+
+    // Stream Sync™
+    function syncStreams(newVal) {
+        streamSync.value.status = { delays: false, syncing: true, error: false }
+        let filteredArray = newVal.delay.filter(e => e);
+        let biggestDelay = Math.max(...filteredArray);
+        let smallestDelay = Math.min(...filteredArray);
+        if ((newVal.autoSync && (biggestDelay - smallestDelay) < newVal.maxOffset) || filteredArray <= 1) finishSync();
+        let syncArray = [];
+        for (let delay of newVal.delay) {
+            switch (delay) {
+                case null: syncArray.push(null); break;
+                default: syncArray.push(biggestDelay - delay); break;
+            }
+        }
+        nodecg.sendMessage('syncStreams', syncArray);
+        setTimeout(() => finishSync(), Math.max(...syncArray))
+
+        function finishSync() {
+            streamSync.value.status = { delays: false, syncing: false, error: false }
+            for (let i = 0; i < 4; i++) {
+                if (syncArray[i] > 0) streamSync.value.delay[i] = streamSync.value.delay[i] + syncArray[i];
+
+            }
+            checklist.value.default.syncStreams = true;
+        }
+    }
+
+    // Ad player.
+    async function playAds(duration, ack) {
+        let newVal = adPlayer.value;
+        nodecg.log.info('Ad requested on ' + Date() + '.')
+        let transition = await send('GetCurrentSceneTransition');
+        let secondsLeft = 0;
+
+        switch (true) {
+            case (newVal.videoAds && newVal.twitchAds):
+                secondsLeft = Math.ceil((duration + (transition.transitionDuration * 2)) / 1000) + parseFloat(newVal.twitchAdLength);
+                break;
+            case (newVal.videoAds):
+                secondsLeft = Math.ceil((duration + (transition.transitionDuration * 2)) / 1000);
+                break;
+            case (newVal.twitchAds):
+                secondsLeft = parseFloat(newVal.twitchAdLength);
+                break;
+        }
+
+        adPlayer.value.secondsLeft = secondsLeft;
+        secondsLeft--;
+        const timerInterval = setInterval(() => {
+            adPlayer.value.secondsLeft = secondsLeft;
+            secondsLeft--;
+            if (secondsLeft < 0) clearInterval(timerInterval);
+        }, 1000);
+
+        if (newVal.videoAds) await playVideo();
+        if (newVal.twitchAds) await playTwitch();
+
+        try { clearInterval(timerInterval) } catch { };
+
+        adPlayer.value.secondsLeft = 0;
+        adPlayer.value.adPlaying = false;
+        checklist.value.default.playAd = true;
+
+        async function playVideo() {
+            return new Promise(async (resolve) => {
+                let previewScene = obsStatus.value.previewScene;
+                await send('SetCurrentPreviewScene', { sceneName: newVal.videoScene });
+                await send('TriggerStudioModeTransition');
+                obs.once('SceneTransitionEnded', () => {
+                    setTimeout(() => {
+                        ack(null)
+                        send('SetCurrentPreviewScene', { sceneName: previewScene });
+                    }, 1000);
+                    setTimeout(async () => {
+                        await send('SetCurrentPreviewScene', { sceneName: settings.value.intermissionScene });
+                        await send('TriggerStudioModeTransition');
+                        obs.once('SceneTransitionEnded', () => {
+                            setTimeout(() => send('SetCurrentPreviewScene', { sceneName: previewScene }), 1000);
+                            resolve();
+                        });
+                    }, duration + 2000);
+                })
+            })
+        }
+
+        async function playTwitch() {
+            return new Promise(async (resolve) => {
+                nodecg.sendMessageToBundle('twitchStartCommercial', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength, fromDashboard: false })
+                nodecg.sendMessageToBundle('twitchStartCommercialTimer', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength })
+                setTimeout(() => resolve(), newVal.twitchAdLength * 1000);
+            })
+        }
+    }
+
+    async function refreshVideoSource() {
+        let itemList = await send('GetSceneItemList', { sceneName: adPlayer.value.videoScene })
+        for (let item of itemList.sceneItems) {
+            if (item.inputKind !== 'browser_source') continue;
+            await send('PressInputPropertiesButton', { inputName: item.sourceName, propertyName: 'refreshnocache' })
+        }
+        adPlayer.value.adPlaying = false;
+        adPlayer.value.secondsLeft = 0;
+    }
+
+    async function websocketDisconnect() {
+        nodecg.log.error('Disconnected from OBS instance! Attempting to reconnect...');
+        audioSources.value = [];
+        const reconnectInterval = setInterval(() => {
+            obs.connect(`ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}`, nodecg.bundleConfig.websocket.password, {
+                eventSubscriptions: EventSubscription.All
+            }).then(() => {
+                obs.once('Identified', () => {
+                    nodecg.log.info('Reconnected to OBS instance!');
+                    clearInterval(reconnectInterval);
+                    setup(false)
+                })
+            }).catch(() => { });
+        }, 2500)
+    }
+
+    async function send(request, data) {
+        return new Promise(async (resolve, reject) => {
+            obs.call(request, data)
+                .then((result) => resolve(result))
+                .catch((error) => {
+                    if (error.code === 600 || !error.code) return;
+                    nodecg.log.error('A OBS Websocket error has occurred.\n', {
+                        code: error.code,
+                        request: request,
+                        requestData: data,
+                    })
+                    return;
+                })
+        })
+    }
+
+    //     function updateCurrentScene(scene) {
+    //         currentScene.value.program = scene;
+    //         settings.value.inTransition = false;
+    //         if (scene !== settings.value.intermissionScene && !adPlayer.value.adPlaying) {
+    //             settings.value.inIntermission = false;
+    //             settings.value.emergencyTransition = false;
+    //         }
+    //         else {
+    //             settings.value.inIntermission = true;
+    //             if (timer.value.state === 'finished') {
+    //                 checklist.value = {
+    //                     started: true,
+    //                     completed: false,
+    //                     playRun: false,
+    //                     playAd: false,
+    //                     verifyStream: false,
+    //                     syncStreams: false,
+    //                     checkAudio: false,
+    //                     checkInfo: false,
+    //                     checkReady: false,
+    //                     finalCheck: false
+    //                 }
+    //                 if (!adPlayer.value.videoAds && !adPlayer.value.twitchAds) checklist.value.playAd = true;
+    //             }
+    //         }
+    //     }
 }

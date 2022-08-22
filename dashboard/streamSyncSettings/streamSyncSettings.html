@@ -8,16 +8,14 @@
 </head>
 
 <body>
-    <style>
-        .input {
-            margin-top: 17px;
-        }
-    </style>
-    <button id="streamSync" onClick="streamSync.value.autoSync = !streamSync.value.autoSync"></button>
-    <div class="input">
-        <input type="text" id="maxOffset" onChange="streamSync.value.maxOffset = this.value"></input>
-        <label>Max Offset</label>
-        <div class="inputBorder"></div>
+    <button id="toggleSync" onClick="streamSync.value.active = !streamSync.value.active"></button>
+    <div id="streamSyncSettings">
+        <button id="toggleAutoSync" onClick="streamSync.value.autoSync = !streamSync.value.autoSync"></button>
+        <div class="input">
+            <input type="text" id="maxOffset" onChange="streamSync.value.maxOffset = this.value"></input>
+            <label>Max Offset</label>
+            <div class="inputBorder"></div>
+        </div>
     </div>
     <script>
         const streamSync = nodecg.Replicant('streamSync');
@@ -27,15 +25,44 @@
             NodeCG.waitForReplicants(streamSync).then(() => {
 
                 streamSync.on('change', (newVal) => {
+                    switch (newVal.active) {
+                        case true:
+                            document.getElementById('toggleSync').innerHTML = 'Disable Stream Sync';
+                            document.getElementById("toggleSync").style.backgroundColor = '#990000';
+                            document.querySelector('#streamSyncSettings').style.display = 'inherit';
+                            break;
+                        case false:
+                            document.getElementById('toggleSync').innerHTML = 'Enable Stream Sync';
+                            document.getElementById("toggleSync").style.backgroundColor = '#272727';
+                            document.querySelector('#streamSyncSettings').style.display = 'none';
+                            break;
+                    }
                     switch (newVal.autoSync) {
-                        case true: document.getElementById('streamSync').innerHTML = 'Turn Off Auto Stream Sync'; document.getElementById("streamSync").style.backgroundColor = '#990000'; document.getElementById("maxOffset").disabled = false; break;
-                        case false: document.getElementById('streamSync').innerHTML = 'Turn On Auto Stream Sync'; document.getElementById("streamSync").style.backgroundColor = '#272727'; document.getElementById("maxOffset").disabled = true; break;
+                        case true:
+                            document.getElementById('toggleAutoSync').innerHTML = 'Disable Auto Sync';
+                            document.getElementById("toggleAutoSync").style.backgroundColor = '#990000';
+                            document.getElementById("maxOffset").disabled = false;
+                            break;
+                        case false:
+                            document.getElementById('toggleAutoSync').innerHTML = 'Enable Auto Sync';
+                            document.getElementById("toggleAutoSync").style.backgroundColor = '#272727';
+                            document.getElementById("maxOffset").disabled = true;
+                            break;
                     }
                     document.getElementById('maxOffset').value = newVal.maxOffset;
                 })
             })
         })
     </script>
+    <style>
+        .input {
+            margin-top: 17px;
+        }
+
+        #toggleAutoSync {
+            margin-top: 16px;
+        }
+    </style>
 </body>
 
 </html>
