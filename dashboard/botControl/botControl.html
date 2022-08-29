@@ -3,8 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
-    <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <script defer src="/components/button/button.js"></script>
     <link rel="stylesheet" href="botControl.css" />
     <script src="botControl.js"></script>
 </head>
@@ -14,10 +13,12 @@
         <p style="text-align: center; font-size: 16px"><i>The bot is not active.</i></p>
     </div>
     <div id="botActive">
-        <button id="toggleBot" onClick="botData.value.connected = !botData.value.connected;"></button>
+        <nodecg-button id="toggleBot" onClick="botData.value.connected = !botData.value.connected;"></nodecg-button>
         <div id="userDiv">
         </div>
     </div>
+    <script>
+    </script>
 </body>
 
 </html>

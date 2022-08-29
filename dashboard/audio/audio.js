@@ -46,12 +46,13 @@ function createSlider(source) {
 			<button class="muteButton">
 				<span class="material-icons mute" source="${source.name}" onclick="nodecg.sendMessage('toggleMute', '${source.name}')" style="color: ${(source.muted) ? 'red' : 'white'}">${(source.muted) ? 'volume_off' : 'volume_up'}</span>
 			</button>
-			<input type="range" class="slider" source="${source.name}" min="0" max="100" value="${dbToPercent(source.volume.db)}" onInput="setLabel('${source.name}', this.value)" onChange="nodecg.sendMessage('setVolume', { source: '${source.name}', volume: parseFloat(percentToDb(this.value)) })">
-			<div class="input">	
+			<nodecg-slider class="slider" source="${source.name}" min="0" max="100" value="${dbToPercent(source.volume.db)}" onChange="nodecg.sendMessage('setVolume', { source: '${source.name}', volume: parseFloat(percentToDb(this.value)) })"></nodecg-slider>
+			<nodecg-input type="number" class="offset" source="${source.name}" value="${source.offset}" onChange="nodecg.sendMessage('setOffset', { source: '${source.name}', offset: parseInt(this.value) })"></nodecg-input>
+			<!-- <div class="input">	
 				<input type="number" class="offset" source="${source.name}" value="${source.offset}" onChange="nodecg.sendMessage('setOffset', { source: '${source.name}', offset: parseInt(this.value) })">
 				<label>Offset</label>
 				<div class="inputBorder">
-			</div>
+			</div> -->
 		</div>
 	</div>`
 	document.getElementById('sourceSliders').innerHTML += slider;

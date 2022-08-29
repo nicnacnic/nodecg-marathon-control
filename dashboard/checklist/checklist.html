@@ -5,76 +5,45 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
     <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <script defer src="/components/checkbox/checkbox.js"></script>
 </head>
 
 <body>
-    <style>
-        #buttonDiv {
-            display: flex;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        #buttonDiv button {
-            width: 48%;
-        }
-
-        #override {
-            margin-right: 15px;
-        }
-
-        .checkbox {
-            width: 100%;
-            display: flex;
-            margin: 5px 0;
-        }
-
-        .checkbox span {
-            display: inline-flex;
-            align-items: center;
-            margin-left: 5px;
-        }
-
-        #statusText {
-            margin-top: 10px;
-        }
-    </style>
     <div>
         <div id="buttonDiv">
             <button id="override" onclick="override()">Override</button>
             <button id="reset" onClick="reset()">Reset</button>
         </div>
         <div class="checkbox">
-            <input type="checkbox" id="playRun" title="This checkbox is managed by the system." disabled></input>
+            <nodecg-checkbox id="playRun" title="This checkbox is managed by the system." disabled></nodecg-checkbox>
             <span>Play the next run</span>
         </div>
         <div class="checkbox">
-            <input type="checkbox" id="playAd" title="This checkbox is managed by the system." disabled></input>
+            <nodecg-checkbox id="playAd" title="This checkbox is managed by the system." disabled></nodecg-checkbox>
             <span>Play an ad</span>
         </div>
         <div class="checkbox">
-            <input type="checkbox" id="verifyStream"
-                onClick="checklist.value.default.verifyStream = this.checked"></input>
+            <nodecg-checkbox id="verifyStream" onClick="checklist.value.default.verifyStream = this.checked"></nodecg-checkbox>
             <span>Verify the stream key and layout</span>
         </div>
         <div class="checkbox">
-            <input type="checkbox" id="syncStreams" title="This checkbox is managed by the system." disabled></input>
+            <nodecg-checkbox id="syncStreams" title="This checkbox is managed by the system." disabled></nodecg-checkbox>
             <span>Sync the streams</span>
         </div>
         <div class="checkbox">
-            <input type="checkbox" id="checkAudio" onClick="checklist.value.default.checkAudio = this.checked"></input>
+            <nodecg-checkbox id="checkAudio" onClick="checklist.value.default.checkAudio = this.checked"></nodecg-checkbox>
             <span>Adjust audio levels</span>
         </div>
         <div class="checkbox">
-            <input type="checkbox" id="checkInfo" onClick="checklist.value.default.checkInfo = this.checked"></input>
+            <nodecg-checkbox id="checkInfo" onClick="checklist.value.default.checkInfo = this.checked"></nodecg-checkbox>
             <span>Verify run information</span>
         </div>
         <div class="checkbox">
-            <input type="checkbox" id="finalCheck" onClick="checklist.value.default.finalCheck = this.checked"></input>
+            <nodecg-checkbox id="finalCheck" onClick="checklist.value.default.finalCheck = this.checked"></nodecg-checkbox>
             <span>Make sure everything looks good</span>
         </div>
         <div class="checkbox">
-            <input type="checkbox" id="checkReady" onClick="checklist.value.default.checkReady = this.checked"></input>
+            <nodecg-checkbox id="checkReady" onClick="checklist.value.default.checkReady = this.checked"></nodecg-checkbox>
             <span>Ask everyone if they're ready</span>
         </div>
     </div>
@@ -96,8 +65,6 @@
                     document.getElementById(item).checked = newVal.default[item];
                 }
                 for (let item of Object.keys(newVal.custom)) {
-                    console.log(item)
-                    console.log(document.querySelector(`#custom`))
                     setTimeout(() => console.log(document.getElementById(item)), 1000);
                     document.querySelector(`#custom #${item}`).checked = newVal.custom[item];
                 }
@@ -122,7 +89,7 @@
             for (let item of Object.keys(nodecg.bundleConfig.checklist)) {
                 document.getElementById('custom').innerHTML += `
                 <div class="checkbox">
-                    <input type="checkbox" id="${item} "onClick="checklist.value.custom.${item} = this.checked"></input>
+                    <nodecg-checkbox id="${item}" onClick="checklist.value.custom.${item} = this.checked"></nodecg-checkbox>
                     <span>${nodecg.bundleConfig.checklist[item]}</span>
                 </div>`
             }
@@ -144,6 +111,37 @@
             checklist.value.custom = custom;
         }
     </script>
+        <style>
+            #buttonDiv {
+                display: flex;
+                width: 100%;
+                margin-bottom: 15px;
+            }
+    
+            #buttonDiv button {
+                width: 48%;
+            }
+    
+            #override {
+                margin-right: 15px;
+            }
+    
+            .checkbox {
+                width: 100%;
+                display: flex;
+                margin: 5px 0;
+            }
+    
+            .checkbox span {
+                display: inline-flex;
+                align-items: center;
+                margin-left: 5px;
+            }
+    
+            #statusText {
+                margin-top: 10px;
+            }
+        </style>
 </body>
 
 </html>

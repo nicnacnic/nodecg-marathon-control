@@ -3,18 +3,14 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
-    <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <script defer src="/components/button/button.js"></script>
+    <script defer src="/components/input/input.js"></script>
 </head>
 
 <body>
-    <button id="autoRecord" onClick="settings.value.autoRecord = !settings.value.autoRecord"></button>
-    <div class="input">
-        <input type="text" id="filenameFormatting" onChange="settings.value.filenameFormatting = this.value"></input>
-        <label>Filename Formatting</label>
-        <div class="inputBorder"></div>
-    </div>
-    <button id="toggleTable" onClick="toggleTable()">Show Variables</button>
+    <nodecg-button id="autoRecord" onClick="settings.value.autoRecord = !settings.value.autoRecord"></nodecg-button>
+    <nodecg-input type="text" id="filenameFormatting" label="Filename Formatting" onChange="settings.value.filenameFormatting = this.value"></nodecg-input>
+    <nodecg-button id="toggleTable" onClick="toggleTable()">Show Variables</nodecg-button>
     <table id="variableTable">
         <tbody>
             <tr>
@@ -170,9 +166,10 @@
             NodeCG.waitForReplicants(settings).then(() => {
 
                 settings.on('change', (newVal) => {
+                    let autoRecord = document.getElementById('autoRecord');
                     switch (newVal.autoRecord) {
-                        case true: document.getElementById('autoRecord').innerHTML = 'Turn Off Auto Record'; document.getElementById("autoRecord").style.backgroundColor = '#990000'; document.getElementById("filenameFormatting").disabled = false; break;
-                        case false: document.getElementById('autoRecord').innerHTML = 'Turn On Auto Record'; document.getElementById("autoRecord").style.backgroundColor = '#272727'; document.getElementById("filenameFormatting").disabled = true; break;
+                        case true: autoRecord.value = 'Turn Off Auto Record'; autoRecord.backgroundColor = '#990000'; document.getElementById("filenameFormatting").disabled = false; break;
+                        case false: autoRecord.value = 'Turn On Auto Record'; autoRecord.backgroundColor = '#272727'; document.getElementById("filenameFormatting").disabled = true; break;
                     }
                     document.getElementById('filenameFormatting').value = newVal.filenameFormatting;
                 })
@@ -181,18 +178,14 @@
 
         function toggleTable() {
             switch (window.getComputedStyle(document.getElementById('variableTable')).getPropertyValue('display')) {
-                case 'none': document.getElementById('variableTable').style.display = 'table'; document.getElementById('toggleTable').innerHTML = 'Hide Variables'; break;
-                case 'table': document.getElementById('variableTable').style.display = 'none'; document.getElementById('toggleTable').innerHTML = 'Show Variables'; break;
+                case 'none': document.getElementById('variableTable').style.display = 'table'; document.getElementById('toggleTable').value = 'Hide Variables'; break;
+                case 'table': document.getElementById('variableTable').style.display = 'none'; document.getElementById('toggleTable').value = 'Show Variables'; break;
             }
         }
     </script>
     <style>
-        .input {
+        nodecg-input {
             margin-top: 17px;
-            margin-bottom: 12px;
-        }
-
-        .select {
             margin-bottom: 12px;
         }
 

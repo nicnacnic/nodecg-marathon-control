@@ -3,14 +3,16 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
-    <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <script defer src="/components/button/button.js"></script>
+    <script defer src="/components/input/input.js"></script>
 </head>
 
 <body onLoad="loadReplicants()">
-    <button id="syncStreams" onClick="nodecg.sendMessage('startStreamSync')">Sync Streams</button>
+    <nodecg-button id="syncStreams" onClick="nodecg.sendMessage('startStreamSync')">Sync Streams</nodecg-button>
     <div id="topRow">
-        <div class="input">
+        <nodecg-input id="0" label="Player 1" disabled></nodecg-input>
+        <nodecg-input id="1" label="Player 2" disabled></nodecg-input>
+        <!-- <div class="input">
             <input type="text" id="0" disabled></input>
             <label>Player 1</label>
             <div></div>
@@ -19,10 +21,12 @@
             <input type="text" id="1" disabled></input>
             <label>Player 2</label>
             <div></div>
-        </div>
+        </div> -->
     </div>
     <div id="bottomRow">
-        <div class="input">
+        <nodecg-input id="2" label="Player 3" disabled></nodecg-input>
+        <nodecg-input id="3" label="Player 4" disabled></nodecg-input>
+        <!-- <div class="input">
             <input type="text" id="2" disabled></input>
             <label>Player 3</label>
             <div></div>
@@ -31,7 +35,7 @@
             <input type="text" id="3" disabled></input>
             <label>Player 4</label>
             <div></div>
-        </div>
+        </div> -->
     </div>
     <div id="error">Error while calculating stream delay. Either a player's latency is greater than 60s, or their stream
         is
@@ -47,26 +51,22 @@
 
                 // Sync streams button.
                 streamSync.on('change', (newVal) => {
+                    let syncStreams = document.getElementById('syncStreams');
                     switch (newVal.active) {
-                        case true:
-                            document.querySelector('body').style.display = 'inherit';
-                            break;
-                        case false:
-                            document.querySelector('body').style.display = 'none';
-                            break;
-
+                        case true: document.querySelector('body').style.display = 'inherit'; break;
+                        case false: document.querySelector('body').style.display = 'none'; break;
                     }
                     if (newVal.status.delays) {
-                        document.getElementById('syncStreams').disabled = true;
-                        document.getElementById('syncStreams').innerHTML = 'Calculating delay...';
+                        syncStreams.disabled = true;
+                        syncStreams.buttonText = 'Calculating delay...';
                     }
                     else if (newVal.status.active) {
-                        document.getElementById('syncStreams').disabled = true;
-                        document.getElementById('syncStreams').innerHTML = 'Syncing streams...';
+                        syncStreams.disabled = true;
+                        syncStreams.buttonText = 'Syncing streams...';
                     }
                     else {
-                        document.getElementById('syncStreams').disabled = false;
-                        document.getElementById('syncStreams').innerHTML = 'Sync Streams';
+                        syncStreams.disabled = false;
+                        syncStreams.buttonText = 'Sync Streams';
                     }
                     document.getElementById('0').value = (newVal.delay[0] !== undefined || newVal.delay[0] !== null) ? newVal.delay[0] : '';
                     document.getElementById('1').value = (newVal.delay[1] !== undefined || newVal.delay[1] !== null) ? newVal.delay[1] : '';
@@ -86,11 +86,11 @@
         }
     </script>
     <style>
-        button {
+        nodecg-button {
             margin-bottom: 8px;
         }
 
-        .input {
+        nodecg-input {
             text-align: left;
             width: 30%;
             margin: 7.5px;

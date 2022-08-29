@@ -17,7 +17,7 @@ module.exports = async (nodecg) => {
     const audioSources = nodecg.Replicant('audioSources'); // List of all OBS audio sources.
     const stats = nodecg.Replicant('stats', { persistent: false, defaultValue: defaultValue.stats }); // All OBS stats.
     const settings = nodecg.Replicant('settings', { defaultValue: defaultValue.settings }) // All dashboard settings.
-    const obsStatus = nodecg.Replicant('obsStatus', { persistent: false }) // OBS data such as scenes.
+    const obsStatus = nodecg.Replicant('obsStatus') // OBS data such as scenes.
     const streamSync = nodecg.Replicant('streamSync', { defaultValue: defaultValue.streamSync }) // Stream Sync data.
     const autoRecord = nodecg.Replicant('autoRecord', { defaultValue: defaultValue.autoRecord }) // Auto Record settings
     const botData = nodecg.Replicant('botData', { defaultValue: defaultValue.botData }) // Bot data.
@@ -32,6 +32,8 @@ module.exports = async (nodecg) => {
         nodecg.log.error('OBS Websocket address has not been defined! Please add the IP address and port in the config.');
         process.exit();
     }
+
+    nodecg.log.info(`Connecting to OBS instance at ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}...`)
 
     obs.connect(`ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}`, nodecg.bundleConfig.websocket.password, {
         eventSubscriptions: EventSubscription.All
@@ -217,7 +219,11 @@ module.exports = async (nodecg) => {
         let audioSourceList = [];
         for (const input of inputList) {
             if (input.inputName.includes('--')) continue;
-            if (input.inputKind === 'browser_source') setPlayerSource(input);
+            if (input.inputKind === 'browser_source') {
+                let sourceSettings = await send('GetInputSettings', { inputName: input.inputName })
+                if (!sourceSettings.inputSettings.reroute_audio) continue;
+                else if (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer')) setPlayerSource(input, sourceSettings);
+            }
             let volume = await send('GetInputVolume', { inputName: input.inputName });
             let mute = await send('GetInputMute', { inputName: input.inputName });
             let offset = await send('GetInputAudioSyncOffset', { inputName: input.inputName });
@@ -225,14 +231,12 @@ module.exports = async (nodecg) => {
         }
         audioSources.value = audioSourceList;
 
-        async function setPlayerSource(input) {
-            let sourceSettings = await send('GetInputSettings', { inputName: input.inputName })
-            if (Object.keys(sourceSettings.inputSettings).length <= 0) return;
+        async function setPlayerSource(input, sourceSettings) {
             switch (true) {
-                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer1.html')): activeRunners.value[0].source = input.inputName; break;
-                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer2.html')): activeRunners.value[1].source = input.inputName; break;
-                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer3.html')): activeRunners.value[2].source = input.inputName; break;
-                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/streamPlayer4.html')): activeRunners.value[3].source = input.inputName; break;
+                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/1.html')): activeRunners.value[0].source = input.inputName; break;
+                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/2.html')): activeRunners.value[1].source = input.inputName; break;
+                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/3.html')): activeRunners.value[2].source = input.inputName; break;
+                case (sourceSettings.inputSettings.url.includes('/bundles/nodecg-marathon-control/graphics/streamPlayer/4.html')): activeRunners.value[3].source = input.inputName; break;
             }
         }
     }
