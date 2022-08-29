@@ -25,6 +25,12 @@
                     <label>Player 1</label>
                     <div></div>
                 </div>
+                <div class="select">
+                    <select id="p1Server" onchange="activeRunners.value[0].server = this.value;">
+                    </select>
+                    <label>Server</label>
+                    <div class="selectBorder"></div>
+                </div>
                 <button class="iconButton" id="p1Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[0].source)"><span id="refreshIcon"
                         class="material-icons">refresh</span></button>
                 <button class="iconButton" id="p1Cam" onclick="activeRunners.value[0].cam = !activeRunners.value[0].cam;"><span id="camIcon"
@@ -35,6 +41,12 @@
                     <input type="text" id="p2Input" onChange="activeRunners.value[1].streamKey = this.value;"></input>
                     <label>Player 2</label>
                     <div></div>
+                </div>
+                <div class="select">
+                    <select id="p2Server" onchange="activeRunners.value[1].server = this.value;">
+                    </select>
+                    <label>Server</label>
+                    <div class="selectBorder"></div>
                 </div>
                 <button class="iconButton" id="p2Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[1].source)"><span id="refreshIcon"
                         class="material-icons">refresh</span></button>
@@ -47,6 +59,12 @@
                     <label>Player 3</label>
                     <div></div>
                 </div>
+                <div class="select">
+                    <select id="p3Server" onchange="activeRunners.value[2].server = this.value;">
+                    </select>
+                    <label>Server</label>
+                    <div class="selectBorder"></div>
+                </div>
                 <button class="iconButton" id="p3Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[2].source)"><span id="refreshIcon"
                         class="material-icons">refresh</span></button>
                 <button class="iconButton" id="p3Cam" onclick="activeRunners.value[2].cam = !activeRunners.value[2].cam;"><span id="camIcon"
@@ -57,6 +75,12 @@
                     <input type="text" id="p4Input" onChange="activeRunners.value[3].streamKey = this.value;"></input>
                     <label>Player 4</label>
                     <div></div>
+                </div>
+                <div class="select">
+                    <select id="p4Server" onchange="activeRunners.value[3].server = this.value;">
+                    </select>
+                    <label>Server</label>
+                    <div class="selectBorder"></div>
                 </div>
                 <button class="iconButton" id="p4Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[3].source)"><span id="refreshIcon"
                         class="material-icons">refresh</span></button>

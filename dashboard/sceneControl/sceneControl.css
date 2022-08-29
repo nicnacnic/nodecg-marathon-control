@@ -26,7 +26,7 @@ body {
 }
 
 .playerDiv .input {
-    width: 292px;
+    width: 204px;
     margin: 0;
     margin-right: 8px;
 }
@@ -46,4 +46,9 @@ body {
     width: calc(100% - 8px);
     margin-top: -2px;
     margin-bottom: 20px;
+}
+
+#runnerInfo .select {
+    width: 80px;
+    margin-right: 8px;
 }

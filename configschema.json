@@ -1,70 +1,62 @@
 {
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
     "$id": "http://example.com/example.json",
-    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
     "default": {
         "address": "localhost:4444",
         "password": "password",
-        "baseRtmpUrl": "https://rtmp.example.live/hls/",
+        "RTMPServers": {},
         "botToken": ""
     },
-    "description": "The root schema comprises the entire JSON document.",
-    "examples": [
-        {
-            "address": "localhost:4444",
-            "password": "password",
-            "baseRtmpUrl": "https://rtmp.example.live/hls/",
-            "botToken": ""
-        }
-    ],
+    "title": "Root Schema",
     "required": [
         "address",
         "password",
-        "baseRtmpUrl",
+        "RTMPServers",
         "botToken"
     ],
-    "title": "The root schema",
-    "type": "object",
     "properties": {
         "address": {
-            "$id": "#/properties/address",
             "type": "string",
-            "title": "The address schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": "",
+            "title": "The address Schema",
             "examples": [
                 "localhost:4444"
             ]
         },
         "password": {
-            "$id": "#/properties/password",
             "type": "string",
-            "title": "The password schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": "",
+            "title": "The password Schema",
             "examples": [
                 "password"
             ]
         },
-        "baseRtmpUrl": {
-            "$id": "#/properties/baseRtmpUrl",
-            "type": "string",
-            "title": "The baseRtmpUrl schema",
-            "description": "An explanation about the purpose of this instance.",
-            "default": "",
+        "RTMPServers": {
+            "type": "object",
+            "default": {},
+            "title": "The RTMPServers Schema",
+            "required": [],
+            "properties": {},
             "examples": [
-                "https://rtmp.example.live/hls/"
+                {}
             ]
         },
         "botToken": {
-            "$id": "#/properties/botToken",
             "type": "string",
-            "title": "The botToken schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": "",
+            "title": "The botToken Schema",
             "examples": [
                 ""
             ]
         }
     },
-    "additionalProperties": true
+    "examples": [
+        {
+            "address": "localhost:4444",
+            "password": "password",
+            "RTMPServers": {},
+            "botToken": ""
+        }
+    ]
 }

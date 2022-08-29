@@ -9,11 +9,12 @@ function createPlayer(num) {
         video = document.querySelector('video');
 
         activeRunners.on('change', (newVal, oldVal) => {
-            if (oldVal == undefined || oldVal[playerID].streamKey !== newVal[playerID].streamKey && newVal[playerID].streamKey !== '') {
+            if (oldVal == undefined || (oldVal[playerID].streamKey !== newVal[playerID].streamKey && newVal[playerID].streamKey !== '') || (oldVal[playerID].server !== newVal[playerID].server && newVal[playerID].server !== '')) {
                 hls = new Hls();
                 hls.attachMedia(video);
                 hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-                    hls.loadSource(`${nodecg.bundleConfig.baseRtmpUrl}${newVal[playerID].streamKey}.m3u8`);
+                    console.log(`Source: ${nodecg.bundleConfig.RTMPServers[newVal[playerID].server]}${newVal[playerID].streamKey}.m3u8`)
+                    hls.loadSource(`${nodecg.bundleConfig.RTMPServers[newVal[playerID].server]}${newVal[playerID].streamKey}.m3u8`);
                     hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
                     playing = true;
                 });

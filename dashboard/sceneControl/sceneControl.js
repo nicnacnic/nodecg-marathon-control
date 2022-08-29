@@ -10,6 +10,16 @@ window.onload = () => {
     // Load replicants.
     NodeCG.waitForReplicants(runDataActiveRun, activeRunners, sceneList, currentScene, settings, adPlayer).then(() => {
 
+        // Populate servers.
+        let options = '';
+        for (let server of Object.keys(nodecg.bundleConfig.RTMPServers)) {
+            options += `<option>${server}</option>`
+        }
+        let dropdownList = document.querySelectorAll('#runnerInfo select');
+        for (let select of dropdownList) {
+            select.innerHTML = options;
+        }
+
         // Populates dropdown with uploaded layouts.
         sceneList.on('change', (newVal) => {
             let select = document.getElementById("sceneList");
@@ -27,6 +37,7 @@ window.onload = () => {
         activeRunners.on('change', (newVal) => {
             for (let i = 0; i < 4; i++) {
                 document.getElementById(`p${i + 1}Input`).value = newVal[i].streamKey;
+                document.getElementById(`p${i + 1}Server`).value = newVal[i].server;
                 switch (newVal[i].cam) {
                     case true: document.getElementById(`p${i + 1}Cam`).childNodes[0].innerHTML = 'videocam'; document.getElementById(`p${i + 1}Cam`).style.color = 'white'; break;
                     case false: document.getElementById(`p${i + 1}Cam`).childNodes[0].innerHTML = 'videocam_off'; document.getElementById(`p${i + 1}Cam`).style.color = 'red'; break;
