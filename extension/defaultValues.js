@@ -12,21 +12,25 @@ module.exports.activeRunners = [
     {
         source: null,
         streamKey: null,
+        server: null,
         cam: false
     },
     {
         source: null,
         streamKey: null,
+        server: null,
         cam: false
     },
     {
         source: null,
         streamKey: null,
+        server: null,
         cam: false
     },
     {
         source: null,
         streamKey: null,
+        server: null,
         cam: false
     }
 ];
@@ -121,5 +125,5 @@ module.exports.adPlayer = {
     twitchAds: false,
     twitchAdLength: 0,
     secondsLeft: 0,
-    videoScene: null
+    videoScene: null,
 }

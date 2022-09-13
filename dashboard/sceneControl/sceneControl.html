@@ -19,6 +19,7 @@
     <div id="runnerInfo">
         <div class="playerDiv" player="0">
             <nodecg-input player="0" label="Player 1" onChange="setStreamKey(0, this.value)"></nodecg-input>
+            <nodecg-select class="server" player="0" label="Server" onChange="setServer(0, this.value)"></nodecg-select>
             <nodecg-icon-button player="0" id="refresh"
                 onclick="nodecg.sendMessage('restartMedia', activeRunners.value[0].source)"><span
                     class="material-icons">refresh</span></nodecg-icon-button>
@@ -27,6 +28,7 @@
         </div>
         <div class="playerDiv" player="1">
             <nodecg-input player="1" label="Player 2" onChange="setStreamKey(1, this.value)"></nodecg-input>
+            <nodecg-select class="server" player="1" label="Server" onChange="setServer(1, this.value)"></nodecg-select>
             <nodecg-icon-button player="1" id="refresh"
                 onclick="nodecg.sendMessage('restartMedia', activeRunners.value[1].source)"><span
                     class="material-icons">refresh</span></nodecg-icon-button>
@@ -35,6 +37,7 @@
         </div>
         <div class="playerDiv" player="2">
             <nodecg-input player="2" label="Player 3" onChange="setStreamKey(2, this.value)"></nodecg-input>
+            <nodecg-select class="server" player="2" label="Server" onChange="setServer(2, this.value)"></nodecg-select>
             <nodecg-icon-button player="2" id="refresh"
                 onclick="nodecg.sendMessage('restartMedia', activeRunners.value[2].source)"><span
                     class="material-icons">refresh</span></nodecg-icon-button>
@@ -43,6 +46,7 @@
         </div>
         <div class="playerDiv" player="3">
             <nodecg-input player="3" label="Player 4" onChange="setStreamKey(3, this.value)"></nodecg-input>
+            <nodecg-select class="server" player="3" label="Server" onChange="setServer(3, this.value)"></nodecg-select>
             <nodecg-icon-button player="3" id="refresh"
                 onclick="nodecg.sendMessage('restartMedia', activeRunners.value[3].source)"><span
                     class="material-icons">refresh</span></nodecg-icon-button>
@@ -50,7 +54,7 @@
                 <span class="material-icons">videocam_off</span></nodecg-icon-button>
         </div>
     </div>
-    <nodecg-button id="adPlayer" onClick="adPlayer.value.adPlaying = true;"></nodecg-button>
+    <nodecg-button id="adPlayer" onClick="nodecg.sendMessage('startAd')"></nodecg-button>
     <script>
         const obsStatus = nodecg.Replicant('obsStatus');
         const activeRunners = nodecg.Replicant('activeRunners');
@@ -62,6 +66,16 @@
 
             // Load replicants.
             NodeCG.waitForReplicants(obsStatus, activeRunners, sceneList, adPlayer, checklist).then(() => {
+
+                // Populate streamkey dropdown.
+                let serverOptions = '';
+                for (let server of Object.keys(nodecg.bundleConfig.RTMPServers)) {
+                    serverOptions += `<option>${server}</option>`
+                }
+                let serverDropdowns = document.querySelectorAll(`#runnerInfo nodecg-select`);
+                for (let select of serverDropdowns) {
+                    select.options = serverOptions;
+                }
 
                 // Populates dropdown with uploaded layouts.
                 sceneList.on('change', (newVal) => {
@@ -76,6 +90,7 @@
                 activeRunners.on('change', (newVal) => {
                     for (let i = 0; i < 4; i++) {
                         document.querySelector(`nodecg-input[player="${i}"]`).value = newVal[i].streamKey;
+                        document.querySelector(`nodecg-select[player="${i}"]`).value = newVal[i].server;
                         let cam = document.querySelector(`#cam[player="${i}"]`)
                         switch (newVal[i].cam) {
                             case true: cam.buttonText = `<span class="material-icons">videocam</span>`; cam.foregroundColor = 'white'; break;
@@ -102,6 +117,10 @@
             if (value === '') activeRunners.value[player].streamKey = null;
             else activeRunners.value[player].streamKey = value;
         }
+        function setServer(player, value) {
+            if (value === '') activeRunners.value[player].server = null;
+            else activeRunners.value[player].server = value;
+        }
     </script>
     <style>
         body {
@@ -122,8 +141,13 @@
             width: 75%;
         }
 
+        #runnerInfo nodecg-select{
+            width: 80px;
+            margin-left: 6px;
+        }
+
         nodecg-input {
-            width: 294px;
+            width: 204px;
         }
 
         nodecg-icon-button {

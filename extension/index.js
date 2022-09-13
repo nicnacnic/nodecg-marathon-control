@@ -128,7 +128,7 @@ module.exports = async (nodecg) => {
     nodecg.listenFor('toggleStream', () => send('ToggleStream'));
     nodecg.listenFor('toggleRecording', () => send('ToggleRecord'));
     nodecg.listenFor('restartMedia', (value) => send('PressInputPropertiesButton', { inputName: value.source, propertyName: 'refreshnocache' }))
-    nodecg.listenFor('startAd', (value, callback) => playAds(value, callback));
+    nodecg.listenFor('startAd', () => playAds());
     nodecg.listenFor('refreshVideoSource', () => refreshVideoSource());
 
     async function setup(msg) {
@@ -414,24 +414,39 @@ module.exports = async (nodecg) => {
     }
 
     // Ad player.
-    async function playAds(duration, ack) {
+    async function playAds() {
+        console.log('starting!')
+
         let newVal = adPlayer.value;
         nodecg.log.info('Ad requested on ' + Date() + '.')
-        let transition = await send('GetCurrentSceneTransition');
+        let video = {};
+        if (newVal.videoAds) {
+            let sceneItems = await send('GetSceneItemList', { sceneName: newVal.videoScene });
+            let inputs = [];
+            for (const item of sceneItems.sceneItems) {
+                if (item.inputKind === 'ffmpeg_source') inputs.push(item.sourceName);
+            }
+            video.name = inputs[Math.floor(Math.random() * inputs.length)];
+            await send('TriggerMediaInputAction', { inputName: video.name, mediaAction: 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART' })
+            let status = await send('GetMediaInputStatus', { inputName: video.name });
+            video.duration = status.mediaDuration;
+            await send('TriggerMediaInputAction', { inputName: video.name, mediaAction: 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_STOP' })
+        }
         let secondsLeft = 0;
 
         switch (true) {
             case (newVal.videoAds && newVal.twitchAds):
-                secondsLeft = Math.ceil((duration + (transition.transitionDuration * 2)) / 1000) + parseFloat(newVal.twitchAdLength);
+                secondsLeft = Math.ceil(video.duration / 1000) + parseFloat(newVal.twitchAdLength) + 1;
                 break;
             case (newVal.videoAds):
-                secondsLeft = Math.ceil((duration + (transition.transitionDuration * 2)) / 1000);
+                secondsLeft = Math.ceil(video.duration / 1000) + 1;
                 break;
             case (newVal.twitchAds):
                 secondsLeft = parseFloat(newVal.twitchAdLength);
                 break;
         }
 
+        adPlayer.value.adPlaying = true;
         adPlayer.value.secondsLeft = secondsLeft;
         secondsLeft--;
         const timerInterval = setInterval(() => {
@@ -454,19 +469,20 @@ module.exports = async (nodecg) => {
                 let previewScene = obsStatus.value.previewScene;
                 await send('SetCurrentPreviewScene', { sceneName: newVal.videoScene });
                 await send('TriggerStudioModeTransition');
-                obs.once('SceneTransitionEnded', () => {
-                    setTimeout(() => {
-                        ack(null)
-                        send('SetCurrentPreviewScene', { sceneName: previewScene });
-                    }, 1000);
+                obs.once('SceneTransitionEnded', async () => {
+                    await send('TriggerMediaInputAction', { inputName: video.name, mediaAction: 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART' });
+                    setTimeout(() => send('SetCurrentPreviewScene', { sceneName: previewScene }), 500);
                     setTimeout(async () => {
                         await send('SetCurrentPreviewScene', { sceneName: settings.value.intermissionScene });
-                        await send('TriggerStudioModeTransition');
-                        obs.once('SceneTransitionEnded', () => {
-                            setTimeout(() => send('SetCurrentPreviewScene', { sceneName: previewScene }), 1000);
-                            resolve();
-                        });
-                    }, duration + 2000);
+                        setTimeout(async () => await send('TriggerMediaInputAction', { inputName: video.name, mediaAction: 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_STOP' }), 2000)
+                        setTimeout(async () => {
+                            await send('TriggerStudioModeTransition');
+                            obs.once('SceneTransitionEnded', () => {
+                                setTimeout(() => send('SetCurrentPreviewScene', { sceneName: previewScene }), 500);
+                                resolve();
+                            });
+                        }, 3000)
+                    }, video.duration - 3000)
                 })
             })
         }
@@ -475,7 +491,7 @@ module.exports = async (nodecg) => {
             return new Promise(async (resolve) => {
                 nodecg.sendMessageToBundle('twitchStartCommercial', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength, fromDashboard: false })
                 nodecg.sendMessageToBundle('twitchStartCommercialTimer', 'nodecg-speedcontrol', { duration: newVal.twitchAdLength })
-                setTimeout(() => resolve(), newVal.twitchAdLength * 1000);
+                setTimeout(() => resolve(), (newVal.twitchAdLength + 1000) * 1000);
             })
         }
     }
