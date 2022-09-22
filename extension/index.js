@@ -134,8 +134,11 @@ module.exports = async (nodecg) => {
     async function setup(msg) {
         if (msg) nodecg.log.info(`Successfully connected to OBS instance at ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}`)
 
-        streamSync.value.syncing = false;
-        streamSync.value.startSync = false;
+        streamSync.value.status =  {
+            delays: false,
+            syncing: false,
+            error: false,
+        };
         adPlayer.value.adPlaying = false;
 
         await send('SetStudioModeEnabled', { studioModeEnabled: true });

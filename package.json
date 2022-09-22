@@ -8,7 +8,8 @@
   "nodecg": {
     "compatibleRange": "^1.8.1",
     "bundleDependencies": {
-      "nodecg-speedcontrol": "^2.4.0"
+      "nodecg-speedcontrol": "^2.4.0",
+      "nodecg-components": "^1.0.0"
     },
     "assetCategories": [
       {
