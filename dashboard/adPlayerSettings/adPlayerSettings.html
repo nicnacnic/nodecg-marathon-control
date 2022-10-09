@@ -42,6 +42,7 @@
                         case false: twitchAds.value = 'Enable Twitch Ads'; twitchAds.backgroundColor = '#272727'; break;
                     }
                     document.getElementById('sceneList').value = newVal.videoScene;
+                    document.getElementById('twitchAdLength').value = newVal.twitchAdLength;
                 })
 
                 sceneList.on('change', (newVal) => {

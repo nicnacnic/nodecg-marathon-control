@@ -3,16 +3,15 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
-    <script src="../nodecgComponents/nodecgComponents.js"></script>
     <script defer src="/components/checkbox/checkbox.js"></script>
+    <script defer src="/components/button/button.js"></script>
 </head>
 
 <body>
     <div>
         <div id="buttonDiv">
-            <button id="override" onclick="override()">Override</button>
-            <button id="reset" onClick="reset()">Reset</button>
+            <nodecg-button id="override" onclick="checklist.value.completed = true">Override</nodecg-button>
+            <nodecg-button id="reset" onClick="reset()">Reset</nodecg-button>
         </div>
         <div class="checkbox">
             <nodecg-checkbox id="playRun" title="This checkbox is managed by the system." disabled></nodecg-checkbox>
@@ -95,9 +94,6 @@
             }
         }
 
-        function override() {
-            checklist.value.completed = true;
-        }
         function reset() {
             let def = {};
             let custom = {};
@@ -109,6 +105,7 @@
             }
             checklist.value.default = def;
             checklist.value.custom = custom;
+            checklist.value.completed = false;
         }
     </script>
         <style>
@@ -135,7 +132,8 @@
             .checkbox span {
                 display: inline-flex;
                 align-items: center;
-                margin-left: 5px;
+                margin-left: 10px;
+                margin-top: 5px;
             }
     
             #statusText {

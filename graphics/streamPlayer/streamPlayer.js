@@ -42,7 +42,9 @@ nodecg.listenFor('getDelay', () => {
         let colorData = ctx.getImageData(25, 1055, 1, 1);
         if (colorData.data[0] >= 250) {
             clearInterval(delayInterval);
-            streamSync.value.delay[playerID] = Date.now() - time;
+            let delayAmount = Date.now() - time;
+            if (streamSync.value.delay[playerID] !== null && streamSync.value.delay[playerID] === delayAmount) delayAmount--;
+            streamSync.value.delay[playerID] = delayAmount;
             console.log(Date.now() - time)
             canvas.remove();
         }

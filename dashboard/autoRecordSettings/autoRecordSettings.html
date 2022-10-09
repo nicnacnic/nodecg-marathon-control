@@ -9,7 +9,7 @@
 
 <body>
     <nodecg-button id="autoRecord" onClick="settings.value.autoRecord = !settings.value.autoRecord"></nodecg-button>
-    <nodecg-input type="text" id="filenameFormatting" label="Filename Formatting" onChange="settings.value.filenameFormatting = this.value"></nodecg-input>
+    <nodecg-input type="text" id="filenameFormatting" label="Filename Formatting" onChange="autoRecord.value.filenameFormatting = this.value"></nodecg-input>
     <nodecg-button id="toggleTable" onClick="toggleTable()">Show Variables</nodecg-button>
     <table id="variableTable">
         <tbody>
@@ -161,9 +161,10 @@
     </table>
     <script>
         const settings = nodecg.Replicant('settings');
+        const autoRecord = nodecg.Replicant('autoRecord');
 
         window.onload = () => {
-            NodeCG.waitForReplicants(settings).then(() => {
+            NodeCG.waitForReplicants(settings, autoRecord).then(() => {
 
                 settings.on('change', (newVal) => {
                     let autoRecord = document.getElementById('autoRecord');
@@ -171,8 +172,9 @@
                         case true: autoRecord.value = 'Turn Off Auto Record'; autoRecord.backgroundColor = '#990000'; document.getElementById("filenameFormatting").disabled = false; break;
                         case false: autoRecord.value = 'Turn On Auto Record'; autoRecord.backgroundColor = '#272727'; document.getElementById("filenameFormatting").disabled = true; break;
                     }
-                    document.getElementById('filenameFormatting').value = newVal.filenameFormatting;
                 })
+
+                autoRecord.on('change', (newVal) => document.getElementById('filenameFormatting').value = newVal.filenameFormatting)
             })
         };
 
