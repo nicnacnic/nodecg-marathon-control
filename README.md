@@ -31,7 +31,7 @@ nodecg-marathon-control description.
 Navigate to your root NodeCG folder, then run `nodecg install nicnacnic/nodecg-marathon-control`. After the installation is complete, type `nodecg defaultconfig nodecg-marathon-control` to generate the config file.
 
 ## Usage
-Once you have everything configured in the config, launch your OBS instance, then NodeCG. If everything is configured correctly, NodeCG should connect to OBS and you should be able to control OBS through the dashboard.
+Once you have everything configured in the config, launch your OBS instance, then NodeCG. If everything is configured correctly, NodeCG should connect to OBS and you should be able to control OBS through the dashboard. Graphics in NodeCG are designed to be used with the browser source in OBS.
 
 If you end up using nodecg-marathon-control during your marathon/event, it would be greatly appreciated if you included the repository name and author in your end credits. Thank you!
 
