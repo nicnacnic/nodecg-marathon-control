@@ -5,6 +5,7 @@
 	<meta charset="UTF-8">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<script defer src="/components/button/button.js"></script>
+	<script defer src="../utils.js"></script>
 </head>
 
 <body>
@@ -23,66 +24,60 @@
 	</div>
 	<iframe id="program" frameBorder="0" allow="autoplay"></iframe>
 	<script>
-		const obsStatus = nodecg.Replicant('obsStatus');
-		const checklist = nodecg.Replicant('checklist')
-		const settings = nodecg.Replicant('settings')
+		function load() {
+			// Open welcome dialog on first launch.
+			if (settings.value.firstLaunch) {
+				setTimeout(() => {
+					nodecg.getDialog('welcome').open()
+					settings.value.firstLaunch = false;
+				}, 2000)
+			}
 
-		window.onload = () => {
-			NodeCG.waitForReplicants(obsStatus, checklist, settings).then(() => {
-
-				// Open welcome dialog on first launch.
-				if (settings.value.firstLaunch) {
-					setTimeout(() => {
-						nodecg.getDialog('welcome').open()
-						settings.value.firstLaunch = false;
-					}, 2000)
+			// Update buttons, icons, and VBO.Ninja room codes.
+			settings.on('change', (newVal) => {
+				switch (newVal.previewCode) {
+					case '': document.getElementById('preview').src = ``; break;
+					default: document.getElementById('preview').src = `https://vdo.ninja/?view=${newVal.previewCode}&autostart&cleanish&transparent&mute`; break;
 				}
+				switch (newVal.programCode) {
+					case '': document.getElementById('program').src = ``; break;
+					default: document.getElementById('program').src = `https://vdo.ninja/?view=${newVal.programCode}&autostart&cleanish&transparent&mute`; break;
+				}
+			})
 
-				// Update buttons, icons, and VBO.Ninja room codes.
-				settings.on('change', (newVal) => {
-					switch (newVal.previewCode) {
-						case '': document.getElementById('preview').src = ``; break;
-						default: document.getElementById('preview').src = `https://vdo.ninja/?view=${newVal.previewCode}&autostart&cleanish&transparent&mute`; break;
+			obsStatus.on('change', (newVal) => {
+				console.log(newVal)
+				let transition = document.getElementById("transition");
+				let emergency = document.getElementById("emergency");
+				switch (newVal.streaming) {
+					case true: document.getElementById('streaming').style.color = 'limegreen'; break;
+					case false: document.getElementById('streaming').style.color = 'white'; break;
+				}
+				switch (newVal.recording) {
+					case true: document.getElementById('recording').style.color = 'red'; break;
+					case false: document.getElementById('recording').style.color = 'white'; break;
+				}
+				switch (newVal.emergencyTransition) {
+					case true: emergency.disabled = true; break;
+					case false: emergency.disabled = false; break;
+				}
+				if (!settings.value.forceChecklist || checklist.value.completed || !checklist.value.started) {
+					switch (newVal.inTransition) {
+						case true: transition.disabled = true; emergency.disabled = true; break;
+						case false: transition.disabled = false; break;
 					}
-					switch (newVal.programCode) {
-						case '': document.getElementById('program').src = ``; break;
-						default: document.getElementById('program').src = `https://vdo.ninja/?view=${newVal.programCode}&autostart&cleanish&transparent&mute`; break;
-					}
-				})
+				}
+			})
 
-				obsStatus.on('change', (newVal) => {
-					let transition = document.getElementById("transition");
-					let emergency = document.getElementById("emergency");
-					switch (newVal.streaming) {
-						case true: document.getElementById('streaming').style.color = 'limegreen'; break;
-						case false: document.getElementById('streaming').style.color = 'white'; break;
+			checklist.on('change', (newVal) => {
+				if (settings.value.forceChecklist && newVal.started) {
+					let transition = document.getElementById('transition');
+					switch (newVal.completed) {
+						case false: transition.disabled = true; transition.title = "Please complete the checklist to unlock this button."; break;
+						case true: transition.disabled = false; transition.title = ''; break;
 					}
-					switch (newVal.recording) {
-						case true: document.getElementById('recording').style.color = 'red'; break;
-						case false: document.getElementById('recording').style.color = 'white'; break;
-					}
-					switch (newVal.emergencyTransition) {
-						case true: emergency.disabled = true; break;
-						case false: emergency.disabled = false; break;
-					}
-					if (!settings.value.forceChecklist || checklist.value.completed || !checklist.value.started) {
-						switch (newVal.inTransition) {
-							case true: transition.disabled = true; emergency.disabled = true; break;
-							case false: transition.disabled = false; break;
-						}
-					}
-				})
-
-				checklist.on('change', (newVal) => {
-					if (settings.value.forceChecklist && newVal.started) {
-						let transition = document.getElementById('transition');
-						switch (newVal.completed) {
-							case false: transition.disabled = true; transition.title = "Please complete the checklist to unlock this button."; break;
-							case true: transition.disabled = false; transition.title = ''; break;
-						}
-					}
-				})
-			});
+				}
+			})
 		}
 	</script>
 	<style>

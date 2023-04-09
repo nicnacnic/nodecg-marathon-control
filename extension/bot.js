@@ -4,7 +4,7 @@ const WebSocket = require('ws');
 const express = require('express')
 const prism = require('prism-media');
 const { Mixer } = require('audio-mixer');
-const { Client, Intents } = require('discord.js');
+const { Client, Events, GatewayIntentBits } = require('discord.js');
 const { joinVoiceChannel, EndBehaviorType, createAudioPlayer, createAudioResource, StreamType } = require('@discordjs/voice');
 
 module.exports.start = (nodecg) => {
@@ -16,15 +16,15 @@ module.exports.start = (nodecg) => {
     const botSettings = nodecg.Replicant('botSettings');
     const settings = nodecg.Replicant('settings')
 
-    const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
+    const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
     const mixer = new Mixer({ channels: 2, bitDepth: 16, ampleRate: 48000 })
 
-    client.once('ready', () => {
+    client.once(Events.ClientReady, () => {
 
         // Get all channels.
         botSettings.value.channels = {};
         client.channels.cache.map(channel => {
-            if (channel.type === 'GUILD_VOICE')
+            if (channel.constructor.name === 'VoiceChannel')
                 botSettings.value.channels[channel.id] = channel.name
         })
 
@@ -98,11 +98,11 @@ module.exports.start = (nodecg) => {
 
         settings.on('change', (newVal, oldVal) => {
             if (oldVal === undefined || newVal.inIntermission !== oldVal.inIntermission) {
-                let guildMember = client.channels.cache.get(botSettings.value.channel).guild.members.cache.get(client.user.id);
-                switch (newVal.inIntermission) {
-                    case true: guildMember.setNickname("Offline"); break;
-                    case false: guildMember.setNickname("🔴 LIVE"); break;
-                }
+                // let guildMember = client.channels.cache.get(botSettings.value.channel).guild.members.cache.get(client.user.id);
+                // switch (newVal.inIntermission) {
+                //     case true: guildMember.setNickname("Offline"); break;
+                //     case false: guildMember.setNickname("🔴 LIVE"); break;
+                // }
             }
         })
 

@@ -40,9 +40,7 @@ module.exports.streamSync = {
     status: {
         delays: false,
         syncing: false,
-        error: false,
-        autoSync: null,
-        checked: null,
+        autoSync: false,
     },
     autoSync: false,
     maxOffset: 500,

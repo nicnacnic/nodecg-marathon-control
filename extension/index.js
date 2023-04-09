@@ -9,6 +9,7 @@ module.exports = async (nodecg) => {
     const obs = new OBSWebSocket();
     let lastRun = +new Date();
     let serverUpgrade = false;
+    let delayArray = {};
     let clients = { delay: [], bot: [] };
 
     // Initialize replicants.
@@ -87,7 +88,7 @@ module.exports = async (nodecg) => {
         }
     }
 
-    //obs.on('InputVolumeMeters', (data) => console.log(data.inputs[0]))
+    //obs.on('InputVolumeMeters', (data) => console.log(data.inputs[4].inputLevelsMul))
 
     // Listen to OBS events.
     // General events.
@@ -117,7 +118,7 @@ module.exports = async (nodecg) => {
     obs.on('RecordStateChanged', (data) => obsStatus.value.recording = data.outputActive);
 
     // Transition events.
-    obs.on('SceneTransitionStarted', () => transition())
+    obs.on('SceneTransitionStarted', (data) => transition(data))
 
     // Listen for requests from clients.
     nodecg.listenFor('setPreviewScene', (value) => send('SetCurrentPreviewScene', { sceneName: value }))
@@ -130,6 +131,7 @@ module.exports = async (nodecg) => {
     nodecg.listenFor('restartMedia', (value) => send('PressInputPropertiesButton', { inputName: value, propertyName: 'refreshnocache' }))
     nodecg.listenFor('startAd', () => playAds());
     nodecg.listenFor('refreshVideoSource', () => refreshVideoSource());
+    nodecg.listenFor('returnDelay', (value) => syncStreams(value, streamSync.value))
 
     async function setup(msg) {
         if (msg) nodecg.log.info(`Successfully connected to OBS instance at ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}`)
@@ -137,9 +139,7 @@ module.exports = async (nodecg) => {
         streamSync.value.status = {
             delays: false,
             syncing: false,
-            error: false,
-            autoSync: null,
-            checked: null,
+            autoSync: false,
         };
         adPlayer.value.adPlaying = false;
 
@@ -207,7 +207,7 @@ module.exports = async (nodecg) => {
                     }
                 } catch { };
             }
-            if (settings.value.autoSetLayout && newVal.customData !== undefined && newVal.customData.layout !== undefined) try { send('SetCurrentPreviewScene', { sceneName: newVal.customData.layout }) } catch {}
+            if (settings.value.autoSetLayout && newVal.customData !== undefined && newVal.customData.layout !== undefined) try { send('SetCurrentPreviewScene', { sceneName: newVal.customData.layout }) } catch { }
             setFilenameFormatting(autoRecord.value.filenameFormatting);
             streamSync.value.delay = [null, null, null, null];
         }
@@ -366,57 +366,86 @@ module.exports = async (nodecg) => {
     }
 
     // Get stream delay.
-    nodecg.listenFor('startStreamSync', () => sendSyncSignal(false))
+    nodecg.listenFor('startStreamSync', () => getStreamDelay(streamSync.value))
 
     streamSync.on('change', (newVal, oldVal) => {
         if (!oldVal) return;
         if (newVal.active && newVal.status.delays && JSON.stringify(newVal.delay) !== JSON.stringify(oldVal.delay)) checkDelayArray(newVal);
     })
 
-    function sendSyncSignal(autoSync) {
-        if (!autoSync) nodecg.log.info('Stream sync requested on ' + Date() + '.');
-        //streamSync.value.delay = [null, null, null, null];
-        streamSync.value.status = { delays: true, syncing: false, error: false, autoSync: autoSync, checked: 0 };
-        clients.delay.forEach(async client => {
-            client.send(JSON.stringify({ type: 'delay', data: 'Trigger ty square!' }));
-        });
-        nodecg.sendMessage('getDelay');
-        setTimeout(() => {
-            if (streamSync.value.status.delays) {
-                checklist.value.default.syncStreams = true;
-                streamSync.value.status = { delays: false, syncing: false, error: true, autoSync: null, checked: null };
-            }
-        }, 60000)
+    sendSyncSignal();
+
+    function sendSyncSignal() {
+        let num = 0;
+        setInterval(() => {
+            clients.delay.forEach(async client => {
+                client.send(JSON.stringify({
+                    type: 'delay', data: {
+                        num: num,
+                        binary: num.toString(2).split('').map(x => !!+x).reverse(),
+                        frame: (num % 2 === 0)
+                    }
+                }));
+            });
+            num++;
+            if (num > 128) num = 0;
+        }, 500)
     }
 
-    function checkDelayArray(newVal) {
-        streamSync.value.status.checked = streamSync.value.status.checked + 1;
-        let numRunners = activeRunners.value.filter((x) => x.streamKey !== null);
-        if (streamSync.value.status.checked >= numRunners.length && streamSync.value.status.checked !== null) syncStreams(newVal);
+    function getStreamDelay() {
+        if (streamSync.value.status.delays) return;
+        streamSync.value.status.delays = true;
+        delayArray = [null, null, null, null];
+        nodecg.sendMessage('getDelay');
     }
+
+    // function sendSyncSignal(autoSync) {
+    //     if (!autoSync) nodecg.log.info('Stream sync requested on ' + Date() + '.');
+    //     //streamSync.value.delay = [null, null, null, null];
+    //     streamSync.value.status = { delays: true, syncing: false, error: false, autoSync: autoSync, checked: 0 };
+    //     clients.delay.forEach(async client => {
+    //         client.send(JSON.stringify({ type: 'delay', data: 'Trigger ty square!' }));
+    //     });
+    //     nodecg.sendMessage('getDelay');
+    //     setTimeout(() => {
+    //         if (streamSync.value.status.delays) {
+    //             checklist.value.default.syncStreams = true;
+    //             streamSync.value.status = { delays: false, syncing: false, error: true, autoSync: null, checked: null };
+    //         }
+    //     }, 60000)
+    // }
+
+    // function checkDelayArray(newVal) {
+    //     streamSync.value.status.checked = streamSync.value.status.checked + 1;
+    //     let numRunners = activeRunners.value.filter((x) => x.streamKey !== null);
+    //     if (streamSync.value.status.checked >= numRunners.length && streamSync.value.status.checked !== null) syncStreams(newVal);
+    // }
 
     // Stream Sync™
-    function syncStreams(newVal) {
-        streamSync.value.status = { delays: false, syncing: true, error: false, autoSync: null, checked: null }
-        let filteredArray = newVal.delay.filter(e => e);
+    function syncStreams(res, newVal, autoSync) {
+        delayArray[res.playerNum] = res.delay;
+        if (delayArray.filter(Boolean).length < streamSync.value.delay.filter(Boolean).length) return;
+        streamSync.value.status = { delays: false, syncing: true, autoSync: (autoSync) ? true : false }
+        let filteredArray = delayArray.filter(e => e);
         let biggestDelay = Math.max(...filteredArray);
         let smallestDelay = Math.min(...filteredArray);
-        if ((newVal.status.autoSync && (biggestDelay - smallestDelay) < newVal.maxOffset) || filteredArray <= 1) finishSync();
+        if ((autoSync && (biggestDelay - smallestDelay) < newVal.maxOffset) || filteredArray <= 1) return finishSync();
+        if (!autoSync) nodecg.log.info('Stream sync requested on ' + Date() + '.');
         let syncArray = [];
-        for (let delay of newVal.delay) {
+        for (let delay of delayArray) {
             switch (delay) {
                 case null: syncArray.push(null); break;
                 default: syncArray.push(biggestDelay - delay); break;
             }
         }
         nodecg.sendMessage('syncStreams', syncArray);
-        setTimeout(() => finishSync(), Math.max(...syncArray))
+        setTimeout(() => finishSync(), Math.max(...syncArray) + 500)
 
         function finishSync() {
-            streamSync.value.status = { delays: false, syncing: false, error: false, autoSync: null, checked: null };
-            for (let i = 0; i < 4; i++) {
-                if (syncArray[i] > 0) streamSync.value.delay[i] = streamSync.value.delay[i] + syncArray[i];
-            }
+            streamSync.value.status = { delays: false, syncing: false, autoSync: false };
+            // for (let i = 0; i < 4; i++) {
+            //     if (syncArray && syncArray[i] > 0) streamSync.value.delay[i] = streamSync.value.delay[i] + syncArray[i];
+            // }
             checklist.value.default.syncStreams = true;
         }
     }
