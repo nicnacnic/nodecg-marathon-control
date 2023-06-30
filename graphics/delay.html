@@ -6,20 +6,51 @@
 </head>
 
 <body>
-    <div></div>
+    <div class="warning">StreamSync™ Tally<br>Do Not Cover!</div>
+    <div class="parent">
+        <div class="num" id="num0"></div>
+        <div class="num" id="num1"></div>
+        <div class="num" id="num2"></div>
+        <div class="num" id="num3"></div>
+        <div class="num" id="num4"></div>
+        <div class="num" id="num5"></div>
+        <div class="num" id="num6"></div>
+        <div class="num" id="num7"></div>
+    </div>
     <style>
         body {
             margin: 0;
         }
 
-        div {
+        .warning {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 16px;
             position: absolute;
-            top: 1030px;
-            width: 50px;
-            height: 50px;
+            top: 1020px;
+        }
+
+        .parent {
+            display: flex;
+            flex-direction: row;
+            padding-top: 10px;
+            position: absolute;
+            top: 1054px;
+            width: 140px;
+            height: 26px;
+            background-color: black;
+        }
+
+        .num {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            padding: 0;
+            background-color: black;
         }
     </style>
     <script>
+        const squares = document.querySelectorAll('.num');
+
         connect()
 
         async function connect() {
@@ -35,9 +66,7 @@
             ws.onmessage = (event) => {
                 let data = JSON.parse(event.data);
                 if (data.type !== 'delay') return;
-                let div = document.querySelector('div');
-                div.style.backgroundColor = "rgb(255, 0, 0)";
-                setTimeout(() => div.style.backgroundColor = "transparent", 1000)
+                showSquares(data.data)
             };
             ws.onclose = () => {
                 console.error('Websocket connection closed. Attemping to reconnect...');
@@ -46,6 +75,24 @@
                 }, 1000);
             }
         }
+
+        function showSquares(data) {
+            squares[0].style.backgroundColor = (data.binary[0]) ? 'white' : 'black';
+            squares[1].style.backgroundColor = (data.binary[1]) ? 'white' : 'black';
+            squares[2].style.backgroundColor = (data.binary[2]) ? 'white' : 'black';
+            squares[3].style.backgroundColor = (data.binary[3]) ? 'white' : 'black';
+            squares[4].style.backgroundColor = (data.binary[4]) ? 'white' : 'black';
+            squares[5].style.backgroundColor = (data.binary[5]) ? 'white' : 'black';
+            squares[6].style.backgroundColor = (data.binary[6]) ? 'white' : 'black';
+            squares[7].style.backgroundColor = (data.frame) ? 'white' : 'black';
+        }
+
+
+        // binaryNumbers.forEach(num => {
+        //     let test = +`${(num[0]) ? '1' : '0'}${(num[1]) ? '1' : '0'}${(num[2]) ? '1' : '0'}${(num[3]) ? '1' : '0'}${(num[4]) ? '1' : '0'}${(num[5]) ? '1' : '0'}${(num[6]) ? '1' : '0'}`
+        //     console.log(parseInt(test, 2))
+        // })
+
     </script>
 </body>
 

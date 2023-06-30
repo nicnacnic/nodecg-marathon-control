@@ -6,6 +6,7 @@
     <script defer src="/components/button/button.js"></script>
     <script defer src="/components/input/input.js"></script>
     <script defer src="/components/select/select.js"></script>
+    <script defer src="../utils.js"></script>
 </head>
 
 <body>
@@ -28,47 +29,48 @@
     </style>
     <nodecg-button id="botActive" onClick="botSettings.value.active = !botSettings.value.active"></nodecg-button>
     <nodecg-select id="channel" label="Channel" onchange="botSettings.value.channel = this.value;"></nodecg-select>
-    <nodecg-input id="audioOffset" label="Audio Offset" type="number" onChange="botSettings.value.audioOffset = this.value;"></nodecg-input>
+    <nodecg-input id="audioOffset" label="Audio Offset" type="number"
+        onChange="botSettings.value.audioOffset = this.value;"></nodecg-input>
     <script>
-        const botSettings = nodecg.Replicant('botSettings')
-
-        window.onload = () => {
-            NodeCG.waitForReplicants(botSettings).then(() => {
-                botSettings.on('change', (newVal, oldVal) => {
-                    if (!oldVal) {
-                        let botActive = document.getElementById('botActive');
-                        switch (newVal.active) {
-                            case true: botActive.value = 'Turn Off Bot'; botActive.backgroundColor = '#990000'; toggleDisabled(false); break;
-                            case false: botActive.value = 'Turn On Bot'; botActive.backgroundColor = '#272727'; toggleDisabled(true); break;
-                        }
+        function load() {
+            botSettings.on('change', (newVal, oldVal) => {
+                console.log(newVal)
+                if (!oldVal) {
+                    let botActive = document.getElementById('botActive');
+                    switch (newVal.active) {
+                        case true: botActive.value = 'Turn Off Bot'; botActive.backgroundColor = '#990000'; toggleDisabled(false); break;
+                        case false: botActive.value = 'Turn On Bot'; botActive.backgroundColor = '#272727'; toggleDisabled(true); break;
                     }
-                    else if (newVal.active !== oldVal.active) {
-                        switch (newVal.active) {
-                            case true: botActive.value = 'Turn Off Bot'; botActive.backgroundColor = '#990000'; nodecg.getDialog('notice').open(); toggleDisabled(false); break;
-                            case false: botActive.value = 'Turn On Bot'; botActive.backgroundColor = '#272727'; nodecg.getDialog('notice').open(); toggleDisabled(true); break;
-                        }
+                }
+                else if (newVal.active !== oldVal.active) {
+                    switch (newVal.active) {
+                        case true: botActive.value = 'Turn Off Bot'; botActive.backgroundColor = '#990000'; nodecg.getDialog('notice').open(); toggleDisabled(false); break;
+                        case false: botActive.value = 'Turn On Bot'; botActive.backgroundColor = '#272727'; nodecg.getDialog('notice').open(); toggleDisabled(true); break;
                     }
-                    if (oldVal === undefined || Object.keys(newVal.channels).length !== Object.keys(oldVal.channels).length) updateChannels(newVal)
-                    else if (newVal.channel !== oldVal.channel) document.getElementById('channel').value = newVal.channel;
-                    document.getElementById('audioOffset').value = newVal.audioOffset;
-                })
+                }
+                if (!oldVal|| Object.keys(newVal.channels).length !== Object.keys(oldVal.channels).length) updateChannels(newVal)
+                else if (newVal.channel !== oldVal.channel) document.getElementById('channel').value = newVal.channel;
+                document.getElementById('audioOffset').value = newVal.audioOffset;
             })
+
+            function toggleDisabled(value) {
+                document.getElementById('channel').disabled = value;
+                document.getElementById('audioOffset').disabled = value;
+            }
         }
 
         function updateChannels(newVal) {
-            let channelList = document.getElementById('channel');
-            let sortedChannels = [];
-            for (let channel in newVal.channels) { sortedChannels.push([channel, newVal.channels[channel]]) }
-            sortedChannels.sort((a, b) => { return a[0] - b[0]; });
-            channelList.options = '';
-            sortedChannels.forEach(channel => channelList.options = channelList.options + `<option value=${channel[0]}>${channel[1]}</option>`);
-            channelList.value = newVal.channel;
-        }
+                let channelList = document.querySelector('#channel')
+                let channels = Object.keys(newVal.channels)
+                let options;
+                console.log(channels.length)
+                for (let j = 0; j < channels.length; j++) {
+                    options = options + `<option value=${channels[j]}>${newVal.channels[channels[j]]}</option>`
+                }
+                channelList.options = options;
+                channelList.value = newVal.channel;
+            }
 
-        function toggleDisabled(value) {
-            document.getElementById('channel').disabled = value;
-            document.getElementById('audioOffset').disabled = value;
-        }
     </script>
 </body>
 
