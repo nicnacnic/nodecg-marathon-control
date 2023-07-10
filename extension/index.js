@@ -31,16 +31,18 @@ module.exports = async (nodecg) => {
 
     if (!nodecg.bundleConfig.websocket.ip || nodecg.bundleConfig.websocket.ip === '' || !nodecg.bundleConfig.websocket.port || nodecg.bundleConfig.websocket.port === '') {
         nodecg.log.error('OBS Websocket address has not been defined! Please add the IP address and port in the config.');
-        process.exit();
+        process.exit(1)
+        gracefulExit()
     }
 
     nodecg.log.info(`Connecting to OBS instance at ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}...`)
 
     obs.connect(`ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}`, nodecg.bundleConfig.websocket.password, {
         eventSubscriptions: EventSubscription.All
-    }).catch(() => {
+    }).catch((e) => {
         nodecg.log.error(`Could not connect to OBS instance at ws://${nodecg.bundleConfig.websocket.ip}:${nodecg.bundleConfig.websocket.port}.`)
-        process.exit();
+        nodecg.log.error(e)
+        process.exit(1)
     });
 
     obs.once('Identified', () => setup(true))
@@ -532,6 +534,7 @@ module.exports = async (nodecg) => {
         async function playTwitch() {
             return new Promise(async (resolve) => {
                 let duration = parseInt(adPlayer.value.twitchAdLength);
+                nodecg.log.debug({ duration: duration, fromDashboard: false })
                 nodecg.sendMessageToBundle('twitchStartCommercial', 'nodecg-speedcontrol', { duration: duration, fromDashboard: false })
                 nodecg.sendMessageToBundle('twitchStartCommercialTimer', 'nodecg-speedcontrol', { duration: duration })
                 setTimeout(() => resolve(), (duration + 5) * 1000);

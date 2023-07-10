@@ -89,7 +89,7 @@ module.exports.status = {
 module.exports.stats = {
     cpuUsage: 0.00,
     fps: 0.00,
-    kbitsPerSec: 0000,
+    kbitsPerSec: 0,
     averageFrameTime: 0.0,
     renderMissedFrames: 0,
     renderTotalFrames: 0,
