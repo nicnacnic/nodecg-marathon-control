@@ -3,107 +3,64 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
-    <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <script defer src="/components/button/button.js"></script>
+    <script defer src="/components/input/input.js"></script>
+    <script defer src="../utils.js"></script>
 </head>
 
-<body onLoad="loadReplicants()">
-    <button id="syncStreams" onClick="nodecg.sendMessage('startStreamSync')">Sync Streams</button>
+<body>
+    <nodecg-button id="syncStreams" onClick="nodecg.sendMessage('startStreamSync')">Sync Streams</nodecg-button>
     <div id="topRow">
-        <div class="input">
-            <input type="text" id="0" disabled></input>
-            <label>Player 1</label>
-            <div></div>
-        </div>
-        <div class="input">
-            <input type="text" id="1" disabled></input>
-            <label>Player 2</label>
-            <div></div>
-        </div>
-    </div>
-    <div id="bottomRow">
-        <div class="input">
-            <input type="text" id="2" disabled></input>
-            <label>Player 3</label>
-            <div></div>
-        </div>
-        <div class="input">
-            <input type="text" id="3" disabled></input>
-            <label>Player 4</label>
-            <div></div>
-        </div>
+        <nodecg-input id="0" label="Player 1" disabled></nodecg-input>
+        <nodecg-input id="1" label="Player 2" disabled></nodecg-input>
+        <nodecg-input id="2" label="Player 3" disabled></nodecg-input>
+        <nodecg-input id="3" label="Player 4" disabled></nodecg-input>
     </div>
     <div id="error">Error while calculating stream delay. Either a player's latency is greater than 60s, or their stream
         is
         not properly configured.</div>
     <script>
-        const streamSync = nodecg.Replicant('streamSync');
-        const checklist = nodecg.Replicant('checklist');
+        function load() {
 
-        function loadReplicants() {
+            // Sync streams button.
+            streamSync.on('change', (newVal) => {
+                let syncStreams = document.getElementById('syncStreams');
+                document.getElementById('0').value = (newVal.delay[0]) ? newVal.delay[0] : '';
+                document.getElementById('1').value = (newVal.delay[1]) ? newVal.delay[1] : '';
+                document.getElementById('2').value = (newVal.delay[2]) ? newVal.delay[2] : '';
+                document.getElementById('3').value = (newVal.delay[3]) ? newVal.delay[3] : '';
+                switch (newVal.active) {
+                    case false: document.querySelector('body').style.display = 'none'; break;
+                    case true: document.querySelector('body').style.display = 'block'; break;
+                }
+                if (newVal.status.active) {
+                    syncStreams.disabled = true;
+                    syncStreams.buttonText = 'Syncing streams...';
+                }
+                else {
+                    syncStreams.disabled = false;
+                    syncStreams.buttonText = 'Sync Streams';
+                }
+                switch (newVal.status.error) {
+                    case true: document.getElementById('error').style.display = 'inline-block'; break;
+                    case false: document.getElementById('error').style.display = 'none'; break;
+                }
+            })
 
-            // Load replicants.
-            NodeCG.waitForReplicants(streamSync, checklist).then(() => {
-
-                // Sync streams button.
-                streamSync.on('change', (newVal) => {
-                    switch (newVal.active) {
-                        case true:
-                            document.querySelector('body').style.display = 'inherit';
-                            break;
-                        case false:
-                            document.querySelector('body').style.display = 'none';
-                            break;
-
-                    }
-                    if (newVal.status.delays) {
-                        document.getElementById('syncStreams').disabled = true;
-                        document.getElementById('syncStreams').innerHTML = 'Calculating delay...';
-                    }
-                    else if (newVal.status.active) {
-                        document.getElementById('syncStreams').disabled = true;
-                        document.getElementById('syncStreams').innerHTML = 'Syncing streams...';
-                    }
-                    else {
-                        document.getElementById('syncStreams').disabled = false;
-                        document.getElementById('syncStreams').innerHTML = 'Sync Streams';
-                    }
-                    document.getElementById('0').value = (newVal.delay[0] !== undefined || newVal.delay[0] !== null) ? newVal.delay[0] : '';
-                    document.getElementById('1').value = (newVal.delay[1] !== undefined || newVal.delay[1] !== null) ? newVal.delay[1] : '';
-                    document.getElementById('2').value = (newVal.delay[2] !== undefined || newVal.delay[2] !== null) ? newVal.delay[2] : '';
-                    document.getElementById('3').value = (newVal.delay[3] !== undefined || newVal.delay[3] !== null) ? newVal.delay[3] : '';
-
-                    switch (newVal.status.error) {
-                        case true: document.getElementById('error').style.display = 'inline-block'; break;
-                        case false: document.getElementById('error').style.display = 'none'; break;
-                    }
-                })
-
-                // checklist.on('change', (newVal) => {
-                //     if (newVal.started && !streamSync.value.active) checklist.value.syncStreams = true;
-                // })
-            });
+            // checklist.on('change', (newVal) => {
+            //     if (newVal.started && !streamSync.value.active) checklist.value.syncStreams = true;
+            // })
         }
     </script>
     <style>
-        button {
-            margin-bottom: 8px;
-        }
-
-        .input {
-            text-align: left;
-            width: 30%;
-            margin: 7.5px;
+        nodecg-button {
+            margin-bottom: 16px;
         }
 
         #topRow {
-            text-align: center;
-            display: inline-block;
-        }
-
-        #bottomRow {
-            text-align: center;
-            display: inline-block;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
         }
 
         #error {

@@ -3,68 +3,169 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
-    <script src="../nodecgComponents/nodecgComponents.js"></script>
-    <link rel="stylesheet" href="sceneControl.css" />
-    <script src="sceneControl.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <script defer src="/components/button/button.js"></script>
+    <script defer src="/components/button/icon-button.js"></script>
+    <script defer src="/components/input/input.js"></script>
+    <script defer src="/components/select/select.js"></script>
 </head>
 
 <body>
-        <div id="sceneDiv">
-            <div class="select">
-                <select id="sceneList" onchange="nodecg.sendMessage('setPreviewScene', this.value)">
-                </select>
-                <label>Scene</label>
-                <div class="selectBorder"></div>
-            </div>
+    <div id="sceneDiv">
+        <nodecg-select id="sceneList" label="Scene" onchange="nodecg.sendMessage('setPreviewScene', this.value)">
+        </nodecg-select>
+    </div>
+    <div id="runnerInfo">
+        <div class="playerDiv" player="0">
+            <nodecg-input player="0" label="Player 1" onChange="setStreamKey(0, this.value)"></nodecg-input>
+            <nodecg-select class="server" player="0" label="Server" onChange="setServer(0, this.value)"></nodecg-select>
+            <nodecg-icon-button player="0" id="refresh"
+                onclick="nodecg.sendMessage('restartMedia', activeRunners.value[0].source)"><span
+                    class="material-icons">refresh</span></nodecg-icon-button>
+            <nodecg-icon-button player="0" id="cam" onclick="activeRunners.value[0].cam = !activeRunners.value[0].cam;">
+                <span class="material-icons">videocam_off</span></nodecg-icon-button>
         </div>
-        <div id="runnerInfo">
-            <div class="playerDiv" id="p1Div">
-                <div class="input">
-                    <input type="text" player="0" class="runnerInput" onChange="setStreamKey(this)"></input>
-                    <label>Player 1</label>
-                    <div></div>
-                </div>
-                <button class="iconButton" id="p1Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[0].source)"><span id="refreshIcon"
-                        class="material-icons">refresh</span></button>
-                <button class="iconButton" id="p1Cam" onclick="activeRunners.value[0].cam = !activeRunners.value[0].cam;"><span id="camIcon"
-                        class="material-icons">videocam_off</span></button>
-            </div>
-            <div class="playerDiv" id="p2Div">
-                <div class="input">
-                    <input type="text" player="1" class="runnerInput" onChange="setStreamKey(this)"></input>
-                    <label>Player 2</label>
-                    <div></div>
-                </div>
-                <button class="iconButton" id="p2Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[1].source)"><span id="refreshIcon"
-                        class="material-icons">refresh</span></button>
-                <button class="iconButton" id="p2Cam" onclick="activeRunners.value[1].cam = !activeRunners.value[1].cam;"><span id="camIcon"
-                        class="material-icons">videocam_off</span></button>
-            </div>
-            <div class="playerDiv" id="p3Div">
-                <div class="input">
-                    <input type="text" player="2" class="runnerInput" onChange="setStreamKey(this)"></input>
-                    <label>Player 3</label>
-                    <div></div>
-                </div>
-                <button class="iconButton" id="p3Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[2].source)"><span id="refreshIcon"
-                        class="material-icons">refresh</span></button>
-                <button class="iconButton" id="p3Cam" onclick="activeRunners.value[2].cam = !activeRunners.value[2].cam;"><span id="camIcon"
-                        class="material-icons">videocam_off</span></button>
-            </div>
-            <div class="playerDiv" id="p4Div">
-                <div class="input">
-                    <input type="text" player="3" class="runnerInput" onChange="setStreamKey(this)"></input>
-                    <label>Player 4</label>
-                    <div></div>
-                </div>
-                <button class="iconButton" id="p4Refresh" onclick="nodecg.sendMessage('restartMedia', activeRunners.value[3].source)"><span id="refreshIcon"
-                        class="material-icons">refresh</span></button>
-                <button class="iconButton" id="p4Cam" onclick="activeRunners.value[3].cam = !activeRunners.value[3].cam;"><span id="camIcon"
-                        class="material-icons">videocam_off</span></button>
-            </div>
+        <div class="playerDiv" player="1">
+            <nodecg-input player="1" label="Player 2" onChange="setStreamKey(1, this.value)"></nodecg-input>
+            <nodecg-select class="server" player="1" label="Server" onChange="setServer(1, this.value)"></nodecg-select>
+            <nodecg-icon-button player="1" id="refresh"
+                onclick="nodecg.sendMessage('restartMedia', activeRunners.value[1].source)"><span
+                    class="material-icons">refresh</span></nodecg-icon-button>
+            <nodecg-icon-button player="1" id="cam" onclick="activeRunners.value[1].cam = !activeRunners.value[1].cam;">
+                <span class="material-icons">videocam_off</span></nodecg-icon-button>
         </div>
-        <button id="adPlayer" onClick="adPlayer.value.adPlaying = true;"></button>
+        <div class="playerDiv" player="2">
+            <nodecg-input player="2" label="Player 3" onChange="setStreamKey(2, this.value)"></nodecg-input>
+            <nodecg-select class="server" player="2" label="Server" onChange="setServer(2, this.value)"></nodecg-select>
+            <nodecg-icon-button player="2" id="refresh"
+                onclick="nodecg.sendMessage('restartMedia', activeRunners.value[2].source)"><span
+                    class="material-icons">refresh</span></nodecg-icon-button>
+            <nodecg-icon-button player="2" id="cam" onclick="activeRunners.value[2].cam = !activeRunners.value[2].cam;">
+                <span class="material-icons">videocam_off</span></nodecg-icon-button>
+        </div>
+        <div class="playerDiv" player="3">
+            <nodecg-input player="3" label="Player 4" onChange="setStreamKey(3, this.value)"></nodecg-input>
+            <nodecg-select class="server" player="3" label="Server" onChange="setServer(3, this.value)"></nodecg-select>
+            <nodecg-icon-button player="3" id="refresh"
+                onclick="nodecg.sendMessage('restartMedia', activeRunners.value[3].source)"><span
+                    class="material-icons">refresh</span></nodecg-icon-button>
+            <nodecg-icon-button player="3" id="cam" onclick="activeRunners.value[3].cam = !activeRunners.value[3].cam;">
+                <span class="material-icons">videocam_off</span></nodecg-icon-button>
+        </div>
+    </div>
+    <nodecg-button id="adPlayer" onClick="nodecg.sendMessage('startAd')"></nodecg-button>
+    <script>
+        const obsStatus = nodecg.Replicant('obsStatus');
+        const activeRunners = nodecg.Replicant('activeRunners');
+        const sceneList = nodecg.Replicant('sceneList');
+        const adPlayer = nodecg.Replicant('adPlayer');
+        const checklist = nodecg.Replicant('checklist');
+
+        window.onload = () => {
+
+            // Load replicants.
+            NodeCG.waitForReplicants(obsStatus, activeRunners, sceneList, adPlayer, checklist).then(() => {
+
+                // Populate streamkey dropdown.
+                let serverOptions = '';
+                for (let server of Object.keys(nodecg.bundleConfig.RTMPServers)) {
+                    serverOptions += `<option>${server}</option>`
+                }
+                let serverDropdowns = document.querySelectorAll(`#runnerInfo nodecg-select`);
+                for (let select of serverDropdowns) {
+                    select.options = serverOptions;
+                }
+
+                // Populates dropdown with uploaded layouts.
+                sceneList.on('change', (newVal) => {
+                    let options = '';
+                    for (let scene of newVal) {
+                        options += `<option ${(obsStatus.value.previewScene === scene) ? 'selected' : ''}>${scene}</option>`
+                    }
+                    document.querySelector('nodecg-select').options = options;
+                });
+
+                // Update active runners and quality.
+                activeRunners.on('change', (newVal) => {
+                    for (let i = 0; i < 4; i++) {
+                        document.querySelector(`nodecg-input[player="${i}"]`).value = newVal[i].streamKey;
+                        document.querySelector(`nodecg-select[player="${i}"]`).value = newVal[i].server;
+                        let cam = document.querySelector(`#cam[player="${i}"]`)
+                        switch (newVal[i].cam) {
+                            case true: cam.buttonText = `<span class="material-icons">videocam</span>`; cam.foregroundColor = 'white'; break;
+                            case false: cam.buttonText = `<span class="material-icons">videocam_off</span>`; cam.foregroundColor = 'red'; break;
+                        }
+                    }
+                });
+
+                adPlayer.on('change', (newVal) => {
+                    let adPlayer = document.getElementById('adPlayer')
+                    if (!newVal.videoAds && !newVal.twitchAds) adPlayer.style.display = 'none';
+                    else adPlayer.style.display = 'inherit'
+                    switch (newVal.adPlaying) {
+                        case true: adPlayer.disabled = true; adPlayer.buttonText = `Ads Playing (${newVal.secondsLeft}s Remaining)`; break;
+                        case false: adPlayer.disabled = false; adPlayer.buttonText = 'Play Ads'; break;
+                    }
+                })
+
+                obsStatus.on('change', (newVal, oldVal) => { if (!oldVal || newVal.previewScene !== oldVal.previewScene) document.getElementById("sceneList").value = newVal.previewScene; });
+            })
+        }
+
+        function setStreamKey(player, value) {
+            if (value === '') activeRunners.value[player].streamKey = null;
+            else activeRunners.value[player].streamKey = value;
+        }
+        function setServer(player, value) {
+            if (value === '') activeRunners.value[player].server = null;
+            else activeRunners.value[player].server = value;
+        }
+    </script>
+    <style>
+        body {
+            margin: 15px;
+            height: 100%;
+            font-size: 16px;
+        }
+
+        #sceneDiv {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            height: 68px;
+        }
+
+        nodecg-select {
+            margin: 0;
+            width: 75%;
+        }
+
+        #runnerInfo nodecg-select{
+            width: 80px;
+            margin-left: 6px;
+        }
+
+        nodecg-input {
+            width: 204px;
+        }
+
+        nodecg-icon-button {
+            width: 40px;
+            margin-top: 3px;
+            margin-left: 6px;
+        }
+
+        #runnerInfo {
+            display: inline-block;
+        }
+
+        .playerDiv {
+            display: flex;
+            width: 100%;
+            height: 68px;
+        }
+    </style>
 </body>
 
 </html>

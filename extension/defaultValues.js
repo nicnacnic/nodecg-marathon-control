@@ -12,21 +12,25 @@ module.exports.activeRunners = [
     {
         source: null,
         streamKey: null,
+        server: null,
         cam: false
     },
     {
         source: null,
         streamKey: null,
+        server: null,
         cam: false
     },
     {
         source: null,
         streamKey: null,
+        server: null,
         cam: false
     },
     {
         source: null,
         streamKey: null,
+        server: null,
         cam: false
     }
 ];
@@ -36,7 +40,7 @@ module.exports.streamSync = {
     status: {
         delays: false,
         syncing: false,
-        error: false,
+        autoSync: false,
     },
     autoSync: false,
     maxOffset: 500,
@@ -66,7 +70,6 @@ module.exports.settings = {
     programCode: '',
     intermissionScene: '',
     autoRecord: false,
-    filenameFormatting: '%CCYY-%MM-%DD %hh-%mm-%ss',
     autoSetLayout: false,
     autoSetRunners: false,
     forceChecklist: false,
@@ -86,7 +89,7 @@ module.exports.status = {
 module.exports.stats = {
     cpuUsage: 0.00,
     fps: 0.00,
-    kbitsPerSec: 0000,
+    kbitsPerSec: 0,
     averageFrameTime: 0.0,
     renderMissedFrames: 0,
     renderTotalFrames: 0,
@@ -121,5 +124,5 @@ module.exports.adPlayer = {
     twitchAds: false,
     twitchAdLength: 0,
     secondsLeft: 0,
-    videoScene: null
+    videoScene: null,
 }

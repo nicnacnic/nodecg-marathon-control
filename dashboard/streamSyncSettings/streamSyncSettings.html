@@ -3,19 +3,15 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
-    <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <script defer src="/components/button/button.js"></script>
+    <script defer src="/components/input/input.js"></script>
 </head>
 
 <body>
-    <button id="toggleSync" onClick="streamSync.value.active = !streamSync.value.active"></button>
+    <nodecg-button id="toggleSync" onClick="streamSync.value.active = !streamSync.value.active"></nodecg-button>
     <div id="streamSyncSettings">
-        <button id="toggleAutoSync" onClick="streamSync.value.autoSync = !streamSync.value.autoSync"></button>
-        <div class="input">
-            <input type="text" id="maxOffset" onChange="streamSync.value.maxOffset = this.value"></input>
-            <label>Max Offset</label>
-            <div class="inputBorder"></div>
-        </div>
+        <nodecg-button id="toggleAutoSync" onClick="streamSync.value.autoSync = !streamSync.value.autoSync"></nodecg-button>
+        <nodecg-input type="number" id="maxOffset" label="Max Offset" onChange="streamSync.value.maxOffset = this.value"></nodecg-input>
     </div>
     <script>
         const streamSync = nodecg.Replicant('streamSync');
@@ -25,37 +21,25 @@
             NodeCG.waitForReplicants(streamSync).then(() => {
 
                 streamSync.on('change', (newVal) => {
+                    let toggleSync = document.getElementById('toggleSync');
+                    let toggleAutoSync = document.getElementById('toggleAutoSync');
+                    let streamSyncSettings = document.getElementById('streamSyncSettings');
+                    let maxOffset = document.getElementById("maxOffset");
                     switch (newVal.active) {
-                        case true:
-                            document.getElementById('toggleSync').innerHTML = 'Disable Stream Sync';
-                            document.getElementById("toggleSync").style.backgroundColor = '#990000';
-                            document.querySelector('#streamSyncSettings').style.display = 'inherit';
-                            break;
-                        case false:
-                            document.getElementById('toggleSync').innerHTML = 'Enable Stream Sync';
-                            document.getElementById("toggleSync").style.backgroundColor = '#272727';
-                            document.querySelector('#streamSyncSettings').style.display = 'none';
-                            break;
+                        case true: toggleSync.buttonText = 'Disable Stream Sync'; toggleSync.backgroundColor = '#990000'; streamSyncSettings.style.display = 'block'; break;
+                        case false: toggleSync.buttonText = 'Enable Stream Sync'; toggleSync.backgroundColor = '#272727'; streamSyncSettings.style.display = 'none'; break;
                     }
                     switch (newVal.autoSync) {
-                        case true:
-                            document.getElementById('toggleAutoSync').innerHTML = 'Disable Auto Sync';
-                            document.getElementById("toggleAutoSync").style.backgroundColor = '#990000';
-                            document.getElementById("maxOffset").disabled = false;
-                            break;
-                        case false:
-                            document.getElementById('toggleAutoSync').innerHTML = 'Enable Auto Sync';
-                            document.getElementById("toggleAutoSync").style.backgroundColor = '#272727';
-                            document.getElementById("maxOffset").disabled = true;
-                            break;
+                        case true: toggleAutoSync.buttonText = 'Disable Auto Sync'; toggleAutoSync.backgroundColor = '#990000'; maxOffset.disabled = false; break;
+                        case false: toggleAutoSync.buttonText = 'Enable Auto Sync'; toggleAutoSync.backgroundColor = '#272727'; maxOffset.disabled = true; break;
                     }
-                    document.getElementById('maxOffset').value = newVal.maxOffset;
+                    maxOffset.value = newVal.maxOffset;
                 })
             })
         })
     </script>
     <style>
-        .input {
+        nodecg-input {
             margin-top: 17px;
         }
 

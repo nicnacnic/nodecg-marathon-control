@@ -3,69 +3,69 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
-    <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <script defer src="/components/button/button.js"></script>
+    <script defer src="/components/select/select.js"></script>
+
 </head>
 
 <body>
-    <button id="twitchAds" onClick="adPlayer.value.twitchAds = !adPlayer.value.twitchAds"></button>
-    <button id="videoAds" onClick="adPlayer.value.videoAds = !adPlayer.value.videoAds"></button>
-    <button id="refreshVideoSource" onClick="nodecg.sendMessage('refreshVideoSource')">Refresh Video Ad Source</button>
-    <div class="select">
-        <select id="twitchAdLength" onchange="adPlayer.value.twitchAdLength = this.value;">
-            <option value="30">30s</option>
-            <option value="60">1m</option>
-            <option value="90">1m30s</option>
-            <option value="120">2m</option>
-            <option value="150">2m30s</option>
-            <option value="180">3m</option>
-        </select>
-        <label>Twitch Ad Length</label>
-        <div class="selectBorder"></div>
-    </div>
-    <div class="select">
-        <select id="sceneList" onchange="adPlayer.value.videoScene = this.value;">
-        </select>
-        <label>OBS Scene</label>
-        <div class="selectBorder"></div>
-    </div>
+    <nodecg-button id="twitchAds" onClick="adPlayer.value.twitchAds = !adPlayer.value.twitchAds"></nodecg-button>
+    <nodecg-button id="videoAds" onClick="adPlayer.value.videoAds = !adPlayer.value.videoAds"></nodecg-button>
+    <nodecg-button id="refreshVideoSource" onClick="nodecg.sendMessage('refreshVideoSource')">Refresh Video Ad Source
+    </nodecg-button>
+    <nodecg-select id="twitchAdLength" label="Twitch Ad Length" onchange="adPlayer.value.twitchAdLength = this.value;">
+        <option value="30">30s</option>
+        <option value="60">1m</option>
+        <option value="90">1m30s</option>
+        <option value="120">2m</option>
+        <option value="150">2m30s</option>
+        <option value="180">3m</option>
+    </nodecg-select>
+    <nodecg-select id="sceneList" label="OBS Scene" onChange="adPlayer.value.videoScene = this.value;">
+    </nodecg-select>
     <script>
         const adPlayer = nodecg.Replicant('adPlayer');
         const sceneList = nodecg.Replicant('sceneList');
 
-        NodeCG.waitForReplicants(adPlayer, sceneList).then(() => {
-            adPlayer.on('change', (newVal, oldVal) => {
-                switch (newVal.videoAds) {
-                    case true: document.getElementById('videoAds').innerHTML = 'Disable Video Ads'; document.getElementById("videoAds").style.backgroundColor = '#990000'; break;
-                    case false: document.getElementById('videoAds').innerHTML = 'Enable Video Ads'; document.getElementById("videoAds").style.backgroundColor = '#272727'; break;
-                }
-                switch (newVal.twitchAds) {
-                    case true: document.getElementById('twitchAds').innerHTML = 'Disable Twitch Ads'; document.getElementById("twitchAds").style.backgroundColor = '#990000'; break;
-                    case false: document.getElementById('twitchAds').innerHTML = 'Enable Twitch Ads'; document.getElementById("twitchAds").style.backgroundColor = '#272727'; break;
-                }
-                document.getElementById('sceneList').value = newVal.videoScene;
-            })
+        window.onload = () => {
 
-            sceneList.on('change', (newVal) => {
-                let dropdown = document.getElementById("sceneList");
-                dropdown.innerHTML = '';
-                for (let scene of newVal) {
-                    let option = `<option ${(scene === adPlayer.value.videoScene) ? 'selected' : ''}>${scene}</option>`
-                    dropdown.innerHTML += option;
-                }
-            });
-        })
+            NodeCG.waitForReplicants(adPlayer, sceneList).then(() => {
+                adPlayer.on('change', async (newVal, oldVal) => {
+                    let videoAds = document.getElementById('videoAds');
+                    let twitchAds = document.getElementById('twitchAds');
+                    switch (newVal.videoAds) {
+                        case true: videoAds.value = 'Disable Video Ads'; videoAds.backgroundColor = '#990000'; break;
+                        case false: videoAds.value = 'Enable Video Ads'; videoAds.backgroundColor = '#272727'; break;
+                    }
+                    switch (newVal.twitchAds) {
+                        case true: twitchAds.value = 'Disable Twitch Ads'; twitchAds.backgroundColor = '#990000'; break;
+                        case false: twitchAds.value = 'Enable Twitch Ads'; twitchAds.backgroundColor = '#272727'; break;
+                    }
+                    document.getElementById('sceneList').value = newVal.videoScene;
+                    document.getElementById('twitchAdLength').value = newVal.twitchAdLength;
+                })
+
+                sceneList.on('change', (newVal) => {
+                    let options = '';
+                    for (let scene of newVal) {
+                        let option = `<option ${(scene === adPlayer.value.videoScene) ? 'selected' : ''}>${scene}</option>`
+                        options += option;
+                    }
+                    document.getElementById("sceneList").options = options;
+                });
+            })
+        }
     </script>
     <style>
         body {
             margin-top: 0;
         }
 
-        button {
+        nodecg-button {
             margin-top: 15px;
         }
 
-        .select {
+        nodecg-select {
             margin-top: 15px;
         }
 

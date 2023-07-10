@@ -3,26 +3,28 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../nodecgComponents/nodecgComponents.css">
-    <script src="../nodecgComponents/nodecgComponents.js"></script>
+    <script defer src="/components/button/button.js"></script>
+    <script defer src="/components/select/select.js"></script>
 </head>
 
 <body>
-    <button id="toggleStream" onClick="toggleStream(this)"></button>
-    <button id="toggleRecording" onClick="toggleRecording(this)"></button>
-    <button id="autoRunner" onClick="settings.value.autoSetRunners = !settings.value.autoSetRunners"></button>
-    <button id="autoLayout" onClick="settings.value.autoSetLayout = !settings.value.autoSetLayout"></button>
-    <button id="forceChecklist" onClick="settings.value.forceChecklist = !settings.value.forceChecklist"
-        title="If enabled, the checklist must be complete to unlock the transition button."></button>
-    <button id="selectPreviewWindow" onClick="setPreviewWindow()">Select Preview Window</button>
-    <button id="selectProgramWindow" onClick="setProgramWindow()">Select Program Window</button>
-    <button id="showWelcome" nodecg-dialog="welcome">Show Welcome Screen</button>
-    <div class="select">
+    <nodecg-button id="toggleStream" onClick="toggleStream(this)"></nodecg-button>
+    <nodecg-button id="toggleRecording" onClick="toggleRecording(this)"></nodecg-button>
+    <nodecg-button id="autoRunner" onClick="settings.value.autoSetRunners = !settings.value.autoSetRunners"></nodecg-button>
+    <nodecg-button id="autoLayout" onClick="settings.value.autoSetLayout = !settings.value.autoSetLayout"></nodecg-button>
+    <nodecg-button id="forceChecklist" onClick="settings.value.forceChecklist = !settings.value.forceChecklist"
+        title="If enabled, the checklist must be complete to unlock the transition button."></nodecg-button>
+    <nodecg-button id="selectPreviewWindow" onClick="setPreviewWindow()">Select Preview Window</nodecg-button>
+    <nodecg-button id="selectProgramWindow" onClick="setProgramWindow()">Select Program Window</nodecg-button>
+    <nodecg-button id="showWelcome" onClick="nodecg.getDialog('welcome').open()">Show Welcome Screen</nodecg-button>
+    <nodecg-select id="intermissionScene" label="Intermission Scene" onchange="settings.value.intermissionScene = this.value">
+    </nodecg-select>
+    <!-- <div class="select">
         <select id="intermissionScene" onChange="settings.value.intermissionScene = this.value">
         </select>
         <label>Intermission Scene</label>
         <div class="selectBorder"></div>
-    </div>
+    </div> -->
     <script>
         const settings = nodecg.Replicant('settings');
         const sceneList = nodecg.Replicant('sceneList')
@@ -34,73 +36,44 @@
 
                 // Update preview/program URL.
                 settings.on('change', (newVal) => {
+                    let autoRunner = document.getElementById('autoRunner');
+                    let autoLayout = document.getElementById('autoLayout');
+                    let forceChecklist = document.getElementById('forceChecklist');
                     switch (newVal.autoSetRunners) {
-                        case true:
-                            document.getElementById('autoRunner').innerHTML = 'Disable Auto Runner';
-                            document.getElementById("autoRunner").style.backgroundColor = '#990000';
-                            break;
-                        case false:
-                            document.getElementById('autoRunner').innerHTML = 'Enable Auto Runner';
-                            document.getElementById("autoRunner").style.backgroundColor = '#272727';
-                            break;
+                        case true: autoRunner.buttonText = 'Disable Auto Runner'; autoRunner.backgroundColor = '#990000'; break;
+                        case false: autoRunner.buttonText = 'Enable Auto Runner'; autoRunner.backgroundColor = '#272727'; break;
                     }
                     switch (newVal.autoSetLayout) {
-                        case true:
-                            document.getElementById('autoLayout').innerHTML = 'Disable Auto Layout';
-                            document.getElementById("autoLayout").style.backgroundColor = '#990000';
-                            break;
-                        case false:
-                            document.getElementById('autoLayout').innerHTML = 'Enable Auto Layout';
-                            document.getElementById("autoLayout").style.backgroundColor = '#272727';
-                            break;
+                        case true: autoLayout.buttonText = 'Disable Auto Layout'; autoLayout.backgroundColor = '#990000'; break;
+                        case false: autoLayout.buttonText = 'Enable Auto Layout'; autoLayout.backgroundColor = '#272727'; break;
                     }
                     switch (newVal.forceChecklist) {
-                        case true:
-                            document.getElementById('forceChecklist').innerHTML = `Don't Enforce Checklist`;
-                            document.getElementById("forceChecklist").style.backgroundColor = '#990000';
-                            break;
-                        case false:
-                            document.getElementById('forceChecklist').innerHTML = 'Enforce Checklist';
-                            document.getElementById("forceChecklist").style.backgroundColor = '#272727';
-                            break;
+                        case true: forceChecklist.buttonText = `Don't Enforce Checklist`; forceChecklist.backgroundColor = '#990000'; break;
+                        case false: forceChecklist.buttonText = 'Enforce Checklist'; forceChecklist.backgroundColor = '#272727'; break;
                     }
                     document.getElementById('intermissionScene').value = newVal.intermissionScene;
                 });
 
                 obsStatus.on('change', (newVal) => {
+                    let toggleStream = document.getElementById('toggleStream');
+                    let toggleRecording = document.getElementById('toggleRecording')
                     switch (newVal.streaming) {
-                        case true:
-                            document.getElementById('toggleStream').innerHTML = 'Stop Streaming';
-                            document.getElementById("toggleStream").style.backgroundColor = '#990000';
-                            document.getElementById('toggleStream').disabled = false;
-                            break;
-                        case false:
-                            document.getElementById('toggleStream').innerHTML = 'Start Streaming';
-                            document.getElementById("toggleStream").style.backgroundColor = '#272727';
-                            document.getElementById('toggleStream').disabled = false;
-                            break;
+                        case true: toggleStream.buttonText = 'Stop Streaming'; toggleStream.backgroundColor = '#990000'; toggleStream.disabled = false; break;
+                        case false: toggleStream.buttonText = 'Start Streaming'; toggleStream.backgroundColor = '#272727'; toggleStream.disabled = false; break;
                     }
                     switch (newVal.recording) {
-                        case true:
-                            document.getElementById('toggleRecording').innerHTML = 'Stop Recording';
-                            document.getElementById("toggleRecording").style.backgroundColor = '#990000';
-                            document.getElementById('toggleRecording').disabled = false;
-                            break;
-                        case false:
-                            document.getElementById('toggleRecording').innerHTML = 'Start Recording';
-                            document.getElementById("toggleRecording").style.backgroundColor = '#272727';
-                            document.getElementById('toggleRecording').disabled = false;
-                            break;
+                        case true: toggleRecording.buttonText = 'Stop Recording'; toggleRecording.backgroundColor = '#990000'; toggleRecording.disabled = false; break;
+                        case false: toggleRecording.buttonText = 'Start Recording'; toggleRecording.backgroundColor = '#272727'; toggleRecording.disabled = false; break;
                     }
                 })
 
                 sceneList.on('change', (newVal) => {
-                    let dropdown = document.getElementById("intermissionScene");
-                    dropdown.innerHTML = '';
+                    let options = '';
                     for (let scene of newVal) {
                         let option = `<option ${(scene === settings.value.intermissionScene) ? 'selected' : ''}>${scene}</option>`
-                        dropdown.innerHTML += option;
+                        options += option;
                     }
+                    document.getElementById("intermissionScene").options = options;
                 });
             });
         }
@@ -108,13 +81,13 @@
         function toggleStream(element) {
             nodecg.sendMessage('toggleStream')
             element.setAttribute('disabled', true)
-            element.style.backgroundColor = '#485264'
+            element.backgroundColor = '#485264'
         }
 
         function toggleRecording(element) {
             nodecg.sendMessage('toggleRecording');
             element.setAttribute('disabled', true);
-            element.style.backgroundColor = '#485264';
+            element.backgroundColor = '#485264';
         }
 
         function setPreviewWindow() {
@@ -130,7 +103,7 @@
         }
     </script>
     <style>
-        button {
+        nodecg-button {
             margin-top: 17px;
         }
 
@@ -138,7 +111,7 @@
             margin: 0;
         }
 
-        .select {
+        nodecg-select{
             margin-top: 15px;
         }
     </style>

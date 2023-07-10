@@ -15,7 +15,7 @@ nodecg-marathon-control description.
 - Live preview and program windows powered by [VDO.Ninja](https://vdo.ninja)
 - Perfectly sync multiple runner perspectives using StreamSync™
 - Automatically record every run using Auto Record
-- Automate everything, from stream keys to runner layouts, with [NodeCG Speedcontrol]() compatibility
+- Automate everything, from stream keys to runner layouts, with [NodeCG Speedcontrol](https://github.com/speedcontrol/nodecg-speedcontrol) compatibility
 - A customizable checklist to make sure restreamers don't forget crucial steps
 - Full audio management, with volume, mute and offset control for each source
 - Capture and sync run commentary using the included Discord bot (coming soon!)
@@ -23,6 +23,7 @@ nodecg-marathon-control description.
 ## Requirements
 - [NodeCG](https://github.com/nodecg/nodecg)
 - [NodeCG Speedcontrol](https://github.com/speedcontrol/nodecg-speedcontrol) (please use the build branch)
+- [NodeCG Components](https://github.com/nicnacnic/nodecg-components)
 - [OBS Websocket]() v5 or above
 - A RTMP server
 
@@ -30,7 +31,7 @@ nodecg-marathon-control description.
 Navigate to your root NodeCG folder, then run `nodecg install nicnacnic/nodecg-marathon-control`. After the installation is complete, type `nodecg defaultconfig nodecg-marathon-control` to generate the config file.
 
 ## Usage
-Once you have everything configured in the config, launch your OBS instance, then NodeCG. If everything is configured correctly, NodeCG should connect to OBS and you should be able to control OBS through the dashboard.
+Once you have everything configured in the config, launch your OBS instance, then NodeCG. If everything is configured correctly, NodeCG should connect to OBS and you should be able to control OBS through the dashboard. Graphics in NodeCG are designed to be used with the browser source in OBS.
 
 If you end up using nodecg-marathon-control during your marathon/event, it would be greatly appreciated if you included the repository name and author in your end credits. Thank you!
 

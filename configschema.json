@@ -1,21 +1,20 @@
 {
     "$schema": "https://json-schema.org/draft/2019-09/schema",
-    "$id": "http://example.com/example.json",
     "type": "object",
     "default": {
-            "websocket": {
-                "ip": "localhost",
-                "port": "4455",
-                "password": ""
-            },
-            "baseRtmpUrl": "https://rtmp.example.com/hls/",
-            "botToken": "",
-            "checklist": {}
+        "websocket": {
+            "ip": "localhost",
+            "port": "4455",
+            "password": ""
+        },
+        "RTMPServers": {},
+        "botToken": "",
+        "checklist": {}
     },
     "title": "Root Schema",
     "required": [
         "websocket",
-        "baseRtmpUrl",
+        "RTMPServers",
         "botToken",
         "checklist"
     ],
@@ -55,18 +54,22 @@
                     ]
                 }
             },
-            "examples": [{
-                "ip": "localhost",
-                "port": "4455",
-                "password": ""
-            }]
-        },
-        "baseRtmpUrl": {
-            "type": "string",
-            "default": "",
-            "title": "The baseRtmpUrl Schema",
             "examples": [
-                "https://rtmp.example.com/hls/"
+                {
+                    "ip": "localhost",
+                    "port": "4455",
+                    "password": ""
+                }
+            ]
+        },
+        "RTMPServers": {
+            "type": "object",
+            "default": {},
+            "title": "The RTMPServers Schema",
+            "required": [],
+            "properties": {},
+            "examples": [
+                {}
             ]
         },
         "botToken": {
@@ -83,17 +86,21 @@
             "title": "The checklist Schema",
             "required": [],
             "properties": {},
-            "examples": [{}]
+            "examples": [
+                {}
+            ]
         }
     },
-    "examples": [{
-        "websocket": {
-            "ip": "localhost",
-            "port": "4455",
-            "password": ""
-        },
-        "baseRtmpUrl": "https://rtmp.example.com/hls/",
-        "botToken": "",
-        "checklist": {}
-    }]
+    "examples": [
+        {
+            "websocket": {
+                "ip": "localhost",
+                "port": "4455",
+                "password": ""
+            },
+            "RTMPServers": {},
+            "botToken": "",
+            "checklist": {}
+        }
+    ]
 }
