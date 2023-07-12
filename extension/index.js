@@ -200,7 +200,8 @@ module.exports = async (nodecg) => {
                     let i = 0;
                     newVal.teams.forEach(team => {
                         team.players.forEach(player => {
-                            activeRunners.value[i].streamKey = player.social.twitch;
+                            // Prefer twitch name, but if it's unset fall back to username (which cannot be null)
+                            activeRunners.value[i].streamKey = player.social.twitch || player.social.name;
                             i++;
                         })
                     })
