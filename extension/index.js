@@ -190,6 +190,10 @@ module.exports = async (nodecg) => {
 
     runDataActiveRun.on('change', (newVal, oldVal) => {
         if (!oldVal) return;
+        if (!newVal) {
+            activeRunners.value = defaultValue.activeRunners;
+            return;
+        }
         if (newVal.id !== oldVal.id) {
             if (checklist.value.started) checklist.value.default.playRun = true;
             if (settings.value.autoSetRunners) {
