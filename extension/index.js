@@ -218,6 +218,22 @@ module.exports = async (nodecg) => {
         if ((!oldVal && newVal) || (newVal.id !== oldVal.id)) {
             if (checklist.value.started) checklist.value.default.playRun = true;
             if (settings.value.autoSetRunners) {
+                try {
+                    for (let j = 0; j < 4; j++) {
+                        activeRunners.value[j].streamKey = null;
+                    }
+                    let i = 0;
+                    newVal.teams.forEach(team => {
+                        team.players.forEach(player => {
+                            // Prefer twitch name, but if it's unset fall back to username (which cannot be null)
+                            activeRunners.value[i].streamKey = player.social.twitch || player.social.name;
+                            i++;
+                        })
+                    })
+                    for (let j = i; j < 4; j++) {
+                        activeRunners.value[i].streamKey = null;
+                    }
+                } catch { };
                 updateStreamKeys(newVal.teams);
             }
             if (settings.value.autoSetLayout && newVal.customData !== undefined && newVal.customData.layout !== undefined) try { send('SetCurrentPreviewScene', { sceneName: newVal.customData.layout }) } catch { }
