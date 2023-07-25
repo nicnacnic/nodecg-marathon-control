@@ -188,26 +188,37 @@ module.exports = async (nodecg) => {
         getAudioSources();
     }
 
+    function resetStreamKeys() {
+        for (let j = 0; j < 4; j++) {
+            activeRunners.value[j].streamKey = null;
+        }
+    }
+
+    function updateStreamKeys(teams) {
+        try {
+            resetStreamKeys();
+            let i = 0;
+            teams.forEach(team => {
+                team.players.forEach(player => {
+                    activeRunners.value[i].streamKey = player.social.twitch;
+                    i++;
+                })
+            })
+            for (let j = i; j < 4; j++) {
+                activeRunners.value[i].streamKey = null;
+            }
+        } catch { };
+    }
+
     runDataActiveRun.on('change', (newVal, oldVal) => {
-        if (!oldVal) return;
-        if (newVal.id !== oldVal.id) {
+        if (!newVal) {
+            resetStreamKeys();
+            return;
+        }
+        if ((!oldVal && newVal) || (newVal.id !== oldVal.id)) {
             if (checklist.value.started) checklist.value.default.playRun = true;
             if (settings.value.autoSetRunners) {
-                try {
-                    for (let j = 0; j < 4; j++) {
-                        activeRunners.value[j].streamKey = null;
-                    }
-                    let i = 0;
-                    newVal.teams.forEach(team => {
-                        team.players.forEach(player => {
-                            activeRunners.value[i].streamKey = player.social.twitch;
-                            i++;
-                        })
-                    })
-                    for (let j = i; j < 4; j++) {
-                        activeRunners.value[i].streamKey = null;
-                    }
-                } catch { };
+                updateStreamKeys(newVal.teams);
             }
             if (settings.value.autoSetLayout && newVal.customData !== undefined && newVal.customData.layout !== undefined) try { send('SetCurrentPreviewScene', { sceneName: newVal.customData.layout }) } catch { }
             setFilenameFormatting(autoRecord.value.filenameFormatting);
